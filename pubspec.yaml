@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  firebase_core: ^3.13.1
+  firebase_core: ^2.32.0
   firebase_auth: ^4.17.8
   cloud_firestore: ^4.17.5
   firebase_messaging: ^14.7.10
@@ -25,6 +25,7 @@ dependencies:
   flutter_local_notifications: ^17.1.2
   shared_preferences: ^2.5.3
   provider: ^6.1.5
+  flutter_native_splash: ^2.4.6
   flutter_localizations:
     sdk: flutter
 
@@ -34,14 +35,19 @@ dev_dependencies:
   flutter_lints: ^5.0.0
 
 flutter_launcher_icons:
-  android: "launcher_icon"
+  android: true
   ios: true
-  image_path: "assets/fasum_icon_512.png"
+  image_path: "assets/booklist.png"
   min_sdk_android: 23
+
+flutter_native_splash:
+  color: "#fff7d5" 
+  image: assets/booklist.png
+  android: true
+  ios: true
 
 flutter:
   uses-material-design: true
   assets:
-    - assets/fasum_icon.png
-    - assets/fasum_icon.png
+    - assets/
     
