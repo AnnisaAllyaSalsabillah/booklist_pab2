@@ -12,7 +12,7 @@ class SignInScreens extends StatefulWidget {
 }
 
 class SignInScreensState extends State<SignInScreens> {
-  final _emailController = TextEditingController();
+  final _userNameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -30,20 +30,24 @@ class SignInScreensState extends State<SignInScreens> {
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  CircleAvatar(
+                    radius: 50,
+                    backgroundImage: AssetImage('assets/radius_booklist.png'),
+                  ),
+                  const SizedBox(height: 40),
                   TextFormField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _userNameController,
+                    textCapitalization: TextCapitalization.words,
                     decoration: const InputDecoration(
-                      labelText: 'Email',
+                      labelText: 'Username',
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
+                      prefixIcon: Icon(Icons.person),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty ||
-                          !_isValidEmail(value)) {
-                        return 'Please enter a valid email';
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your full name';
                       }
                       return null;
                     },
@@ -76,19 +80,37 @@ class SignInScreensState extends State<SignInScreens> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 16),
                   _isLoading
-                      ? const CircularProgressIndicator()
+                      ? const SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: CircularProgressIndicator(),
+                      )
                       : ElevatedButton(
                         onPressed: _signIn,
-                        child: const Text('Sign In'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF4C869),
+                          minimumSize: const Size(120, 45),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text(
+                          'Login',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                   const SizedBox(height: 16.0),
                   RichText(
                     text: TextSpan(
                       style: const TextStyle(
                         fontSize: 16.0,
-                        color: Colors.black,
+                        color: Color.fromARGB(255, 205, 32, 32),
                       ),
                       children: [
                         const TextSpan(text: "Don't have an account? "),
@@ -126,7 +148,7 @@ class SignInScreensState extends State<SignInScreens> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    final email = _emailController.text.trim();
+    final email = _userNameController.text.trim();
     final password = _passwordController.text;
     setState(() => _isLoading = true);
     try {
