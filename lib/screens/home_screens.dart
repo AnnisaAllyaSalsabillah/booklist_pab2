@@ -95,7 +95,7 @@ class _HomeScreensState extends State<HomeScreens> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: Colors.amber[50],
+        backgroundColor: Colors.amber[200],
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
