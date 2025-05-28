@@ -50,7 +50,7 @@ class _HomeScreensState extends State<HomeScreens> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
@@ -190,14 +190,36 @@ class _HomeScreensState extends State<HomeScreens> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.amber[300],
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddPostScreens()),
-          );
-        },
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: SizedBox(
+        height: 60,
+        width: 60,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const AddPostScreens()),
+            );
+          },
+          backgroundColor: Colors.amber[300],
+          foregroundColor: Colors.white,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, size: 32),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: const ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+        child: BottomAppBar(
+          color: Color.fromARGB(255, 252, 234, 209),
+          elevation: 8,
+          shape: CircularNotchedRectangle(),
+          notchMargin: 8,
+          child: SizedBox(
+            height: 40,
+          ),
+        )
       ),
     );
   }
