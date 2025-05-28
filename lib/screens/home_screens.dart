@@ -1,17 +1,18 @@
 import 'dart:convert';
+import 'package:booklist/screens/add_post_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+class HomeScreens extends StatefulWidget {
+  const HomeScreens({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreens> createState() => _HomeScreensState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreensState extends State<HomeScreens> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -46,15 +47,27 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DrawerHeader(
-              decoration: BoxDecoration(color: Colors.amber[100]),
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                  width: 2
+                ),
+              ),
+              padding: const EdgeInsets.all(16),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: Colors.amberAccent[300],
                     child: const Icon(Icons.person, size: 30),
+
                   ),
                   const SizedBox(height: 10),
                   Text(
@@ -180,7 +193,9 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.amber[300],
         onPressed: () {
-          // Navigate to add post screen
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const AddPostScreens()));
         },
         child: const Icon(Icons.add, color: Colors.white),
       ),

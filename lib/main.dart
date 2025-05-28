@@ -107,7 +107,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await showBasicNotification(
       message.notification!.title,
       message.notification!.body,
-
     );
   }
 }
@@ -171,12 +170,12 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Booklist - Community App',
+      title: 'BookList',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: SplashScreens(),
+      home: HomeScreens(),
     );
   }
 }
