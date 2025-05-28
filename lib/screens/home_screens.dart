@@ -59,7 +59,7 @@ class _HomeScreensState extends State<HomeScreens> {
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => SignInScreens()),
-      (route) => false, // Hapus semua route sebelumnya
+      (route) => false,
     );
   }
 
@@ -80,11 +80,7 @@ class _HomeScreensState extends State<HomeScreens> {
                 ListTile(
                   leading: const Icon(Icons.clear),
                   title: const Text('Semua Kategori'),
-                  onTap:
-                      () => Navigator.pop(
-                        context,
-                        null,
-                      ), // Null untuk memilih semua kategori
+                  onTap: () => Navigator.pop(context, null),
                 ),
                 const Divider(),
                 ...categories.map(
@@ -97,11 +93,7 @@ class _HomeScreensState extends State<HomeScreens> {
                               color: Theme.of(context).colorScheme.primary,
                             )
                             : null,
-                    onTap:
-                        () => Navigator.pop(
-                          context,
-                          category,
-                        ), // Kategori yang dipilih
+                    onTap: () => Navigator.pop(context, category),
                   ),
                 ),
               ],
@@ -111,27 +103,19 @@ class _HomeScreensState extends State<HomeScreens> {
       },
     );
 
-    if (result != null) {
-      setState(() {
-        selectedCategory =
-            result; // Set kategori yang dipilih atau null untuk Semua Kategori
-      });
-    } else {
-      // Jika result adalah null, berarti memilih Semua Kategori
-      setState(() {
-        selectedCategory =
-            null; // Reset ke null untuk menampilkan semua kategori
-      });
-    }
+    setState(() {
+      selectedCategory = result;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
-          'Fasum',
+          'Booklist',
           style: TextStyle(
             color: Colors.green[600],
             fontWeight: FontWeight.bold,
@@ -143,18 +127,11 @@ class _HomeScreensState extends State<HomeScreens> {
             icon: const Icon(Icons.filter_list),
             tooltip: 'Filter Kategori',
           ),
-          IconButton(
-            onPressed: () {
-              signOut();
-            },
-            icon: const Icon(Icons.logout),
-          ),
+          IconButton(onPressed: signOut, icon: const Icon(Icons.logout)),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () async {
-          setState(() {});
-        },
+        onRefresh: () async => setState(() {}),
         child: StreamBuilder(
           stream:
               FirebaseFirestore.instance
@@ -165,6 +142,7 @@ class _HomeScreensState extends State<HomeScreens> {
             if (!snapshot.hasData) {
               return const Center(child: CircularProgressIndicator());
             }
+
             final posts =
                 snapshot.data!.docs.where((doc) {
                   final data = doc.data();
@@ -248,31 +226,26 @@ class _HomeScreensState extends State<HomeScreens> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    fullName,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    formatTime(createdAt),
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    description ?? '',
-                                    style: const TextStyle(fontSize: 16),
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                              Text(
+                                fullName,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                formatTime(createdAt),
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                description ?? '',
+                                style: const TextStyle(fontSize: 16),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ],
                           ),
@@ -288,11 +261,36 @@ class _HomeScreensState extends State<HomeScreens> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (context) => const AddPostScreens()));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (context) => const AddPostScreens()),
+          );
         },
-        child: const Icon(Icons.add),
+        backgroundColor: Colors.amber[300],
+        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        elevation: 8,
+        color: const Color(0xFFFEF9F1),
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              IconButton(
+                icon: const Icon(Icons.home_outlined),
+                onPressed: () {}, // tambahkan navigasi jika perlu
+              ),
+              const SizedBox(width: 48), // Spasi untuk FAB
+              IconButton(
+                icon: const Icon(Icons.person_outline),
+                onPressed: () {}, // tambahkan navigasi jika perlu
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
