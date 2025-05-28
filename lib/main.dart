@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:booklist/firebase_options.dart';
+import 'package:booklist/screens/home_screens.dart';
 import 'package:booklist/screens/splash_screens.dart';
-import 'package:firebase_core/firebase_core.dart'; 
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -106,6 +107,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await showBasicNotification(
       message.notification!.title,
       message.notification!.body,
+
     );
   }
 }
@@ -169,12 +171,12 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Fasum',
+      title: 'Booklist - Community App',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: SplashScreen(),
+      home: SplashScreens(),
     );
   }
 }

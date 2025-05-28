@@ -1,24 +1,50 @@
+import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:booklist/screens/home_screens.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/gestures.dart' show TapGestureRecognizer;
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  SignUpScreensState createState() => SignUpScreensState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class SignUpScreensState extends State<SignUpScreens> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _fullNameController = TextEditingController();
+  final _userNameController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
+
+  late TapGestureRecognizer _tapRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _tapRecognizer =
+        TapGestureRecognizer()
+          ..onTap = () {
+            Navigator.push(context, MaterialPageRoute(
+              builder: (context) => const SignInScreens(),
+            ));
+          };
+  }
+
+  @override
+  void dispose() {
+    _userNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _tapRecognizer.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,24 +58,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 32.0),
-                  TextFormField(
-                    controller: _fullNameController,
-                    textCapitalization: TextCapitalization.words,
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                    ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your full name';
-                      }
-                      return null;
-                    },
+                  const CircleAvatar(
+                    radius: 50,
+                    backgroundImage: AssetImage('assets/radius_booklist.png'),
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 40),
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -63,6 +78,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           value.isEmpty ||
                           !_isValidEmail(value)) {
                         return 'Please enter a valid email';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+                  TextFormField(
+                    controller: _userNameController,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Username',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter your full name';
                       }
                       return null;
                     },
@@ -135,27 +166,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
                         onPressed: _signUp,
-                        child: const Text('Sign Up'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFF4C869),
+                          minimumSize: const Size(120, 45),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10.0),
+                          ),
+                        ),
+                        child: const Text('Daftar',
+                        style: TextStyle(
+                          fontSize: 20,
+                          color: Colors.black,
+                          fontWeight: FontWeight.bold
+                        ),
+                        ),
+                        
                       ),
-                  // ElevatedButton(
-                  //   onPressed: () async {
-                  //     try {
-                  //       await FirebaseAuth.instance
-                  //           .createUserWithEmailAndPassword(
-                  //             email: _emailController.text,
-                  //             password: _passwordController.text,
-                  //           );
-                  //       Navigator.of(context).pushReplacement(
-                  //         MaterialPageRoute(
-                  //           builder: (context) => const HomeScreen(),
-                  //         ),
-                  //       );
-                  //     } catch (error) {
-                  //       print(error.toString());
-                  //     }
-                  //   },
-                  //   child: const Text('Sign Up'),
-                  // ),
+                  const SizedBox(height: 20),
+                  RichText(
+                    text: TextSpan(
+                      text: 'Sudah punya Akun?',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color:Color.fromARGB(255, 205, 32, 32),
+                      ),
+                      children: <TextSpan>[
+                        TextSpan(
+                          text: ' Masuk Disini',
+                          style: const TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                            fontSize: 16,
+                          ),
+                          recognizer: _tapRecognizer,
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -179,14 +227,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-            'fullName': _fullNameController.text.trim(),
+            'userName': _userNameController.text.trim(),
             'email': email,
             'createdAt': Timestamp.now(),
           });
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-        (route) => false, // Hapus semua route sebelumnya
+        MaterialPageRoute(builder: (context) => HomeScreens()),
+        (route) => false,
       );
     } on FirebaseAuthException catch (error) {
       _showErrorMessage(_getAuthErrorMessage(error.code));
@@ -205,7 +253,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   bool _isValidEmail(String email) {
     String emailRegex =
-        r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zAZ0-9-]+)*$";
+        r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$";
     return RegExp(emailRegex).hasMatch(email);
   }
 
