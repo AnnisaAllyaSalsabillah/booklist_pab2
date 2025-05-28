@@ -65,8 +65,8 @@ class _HomeScreensState extends State<HomeScreens> {
                 children: [
                   CircleAvatar(
                     radius: 30,
-                    backgroundColor: Colors.amberAccent[300],
-                    child: const Icon(Icons.person, size: 30),
+                    backgroundColor: Colors.amberAccent[100],
+                    child: const Icon(Icons.person_outline, size: 30, color: Colors.amber,),
 
                   ),
                   const SizedBox(height: 10),
