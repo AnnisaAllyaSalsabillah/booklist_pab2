@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:booklist/firebase_options.dart';
 import 'package:booklist/screens/home_screens.dart';
+import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/splash_screens.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -175,7 +176,8 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: HomeScreens(),
+      // home: HomeScreens(),
+      home: ProfileScreens(),
     );
   }
 }

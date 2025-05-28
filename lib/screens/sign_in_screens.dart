@@ -12,7 +12,7 @@ class SignInScreens extends StatefulWidget {
 }
 
 class SignInScreensState extends State<SignInScreens> {
-  final _userNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
@@ -38,16 +38,18 @@ class SignInScreensState extends State<SignInScreens> {
                   ),
                   const SizedBox(height: 40),
                   TextFormField(
-                    controller: _userNameController,
+                    controller: _emailController,
                     textCapitalization: TextCapitalization.words,
                     decoration: const InputDecoration(
-                      labelText: 'Username',
+                      labelText: 'Email',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person),
                     ),
                     validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your full name';
+                      if (value == null ||
+                          value.isEmpty ||
+                          !_isValidEmail(value)) {
+                        return 'Please enter a valid email';
                       }
                       return null;
                     },
@@ -148,7 +150,7 @@ class SignInScreensState extends State<SignInScreens> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    final email = _userNameController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
     setState(() => _isLoading = true);
     try {
