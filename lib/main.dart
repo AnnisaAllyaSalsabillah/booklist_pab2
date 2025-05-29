@@ -180,7 +180,7 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       // home: HomeScreens(),
-       home: ProfileScreens(),
+       home: AddPostScreen(),
       // home: EditProfilScreens(),
 
     );
