@@ -32,7 +32,7 @@ class SignInScreensState extends State<SignInScreens> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  CircleAvatar(
+                  const CircleAvatar(
                     radius: 50,
                     backgroundImage: AssetImage('assets/radius_booklist.png'),
                   ),

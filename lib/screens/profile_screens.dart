@@ -1,8 +1,13 @@
+import 'dart:io';
+
 import 'package:booklist/screens/edit_profil.dart';
+import 'package:booklist/screens/settings_akun.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreens extends StatefulWidget {
   const ProfileScreens({super.key});
@@ -15,6 +20,9 @@ class _ProfileScreensState extends State<ProfileScreens>
     with SingleTickerProviderStateMixin {
   String _userName = '';
   String _email = '';
+  String _phone = '';
+  String _profileImageUrl = '';
+  String _backgroundImageUrl = '';
   bool _isLoading = true;
   late TabController _tabController;
 
@@ -42,6 +50,9 @@ class _ProfileScreensState extends State<ProfileScreens>
           setState(() {
             _userName = data['userName'] ?? '';
             _email = data['email'] ?? '';
+            _phone = data['phone'] ?? '';
+            _profileImageUrl = data['profileImageUrl'] ?? '';
+            _backgroundImageUrl = data['backgroundImageUrl'] ?? '';
           });
         }
       }
@@ -69,122 +80,190 @@ class _ProfileScreensState extends State<ProfileScreens>
     );
   }
 
+  Future<void> _pickImage({required String type}) async {
+    final picker = ImagePicker();
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Wrap(
+        children: [
+          ListTile(
+            leading: const Icon(Icons.camera_alt),
+            title: const Text("Ambil dari Kamera"),
+            onTap: () async {
+              Navigator.pop(context);
+              final picked = await picker.pickImage(source: ImageSource.camera);
+              if (picked != null) await _uploadImage(File(picked.path), type);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.photo),
+            title: const Text("Pilih dari Galeri"),
+            onTap: () async {
+              Navigator.pop(context);
+              final picked = await picker.pickImage(source: ImageSource.gallery);
+              if (picked != null) await _uploadImage(File(picked.path), type);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _uploadImage(File image, String type) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser?.uid;
+      if (uid == null) return;
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('user_images/$uid/${type}_image.jpg');
+      await ref.putFile(image);
+      final url = await ref.getDownloadURL();
+
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        type == 'profile' ? 'profileImageUrl' : 'backgroundImageUrl': url,
+      });
+
+      setState(() {
+        if (type == 'profile') {
+          _profileImageUrl = url;
+        } else {
+          _backgroundImageUrl = url;
+        }
+      });
+    } catch (e) {
+      _showErrorMessage('Upload gagal: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: Text('Profil'),
-                ),
-              ],
-            ),
-            IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
-          ],
+        title: const Text('Profil'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreens(),
+                ),
+              );
+            },
+          ),
+        ],
       ),
-      body:
-          _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : SafeArea(
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 200,
-                      child: Stack(
-                        children: [
-                          Container(
-                            height: 150,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SafeArea(
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 200,
+                    child: Stack(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _pickImage(type: 'background'),
+                          child: Container(
+                            height: 200,
                             width: double.infinity,
-                            decoration: const BoxDecoration(
+                            decoration: BoxDecoration(
                               image: DecorationImage(
-                                image: NetworkImage(
-                                  'https://i.imgur.com/zL4Krbz.jpg',
-                                ),
+                                image: _backgroundImageUrl.isNotEmpty
+                                    ? NetworkImage(_backgroundImageUrl)
+                                    : const NetworkImage(
+                                        'https://i.imgur.com/zL4Krbz.jpg'),
                                 fit: BoxFit.cover,
                               ),
                             ),
                           ),
-                          Positioned(
-                            top: 100,
-                            left: 16,
+                        ),
+                        Positioned(
+                          top: 100,
+                          left: 16,
+                          child: GestureDetector(
+                            onTap: () => _pickImage(type: 'profile'),
                             child: CircleAvatar(
                               radius: 50,
                               backgroundColor: Colors.grey[300],
-                              child: const Icon(Icons.person, size: 40),
+                              backgroundImage: _profileImageUrl.isNotEmpty
+                                  ? NetworkImage(_profileImageUrl)
+                                  : null,
+                              child: _profileImageUrl.isEmpty
+                                  ? const Icon(Icons.person, size: 40)
+                                  : null,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 80),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _userName,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                  ),
+                  const SizedBox(height: 16),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 80),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _userName,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _email,
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _email,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _phone.isNotEmpty ? _phone : '-',
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
                           ),
-                          OutlinedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => const EditProfilScreens(),
-                                ),
-                              );
-                            },
-                            child: const Text('Edit profile'),
-                          ),
-                        ],
-                      ),
+                        ),
+                        OutlinedButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EditProfilScreens(),
+                              ),
+                            );
+                          },
+                          child: const Text('Edit profile'),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                    TabBar(
+                  ),
+                  const SizedBox(height: 8),
+                  TabBar(
+                    controller: _tabController,
+                    labelColor: Colors.orange,
+                    unselectedLabelColor: Colors.black,
+                    indicatorColor: Colors.orange,
+                    tabs: const [Tab(text: 'Post'), Tab(text: 'Likes')],
+                  ),
+                  Expanded(
+                    child: TabBarView(
                       controller: _tabController,
-                      labelColor: Colors.orange,
-                      unselectedLabelColor: Colors.black,
-                      indicatorColor: Colors.orange,
-                      tabs: const [Tab(text: 'Post'), Tab(text: 'Likes')],
+                      children: [_buildPostList(), _buildLikesList()],
                     ),
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [_buildPostList(), _buildLikesList()],
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
     );
   }
 
@@ -195,27 +274,27 @@ class _ProfileScreensState extends State<ProfileScreens>
   Widget _buildLikesList() {
     return ListView(
       padding: const EdgeInsets.all(16),
-      children: [
+      children: const [
         Row(
           children: [
-            const CircleAvatar(radius: 20, backgroundColor: Colors.grey),
-            const SizedBox(width: 10),
+            CircleAvatar(radius: 20, backgroundColor: Colors.grey),
+            SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 Text('Nadh', style: TextStyle(fontWeight: FontWeight.bold)),
                 Text('@bomgyune', style: TextStyle(color: Colors.grey)),
               ],
             ),
           ],
         ),
-        const SizedBox(height: 10),
-        const Text(
+        SizedBox(height: 10),
+        Text(
           'It has been a really a while since I picked up Miss Daws book. Nine Month Contract is fun read. Really fun read. I like Triśta very much. I think Triśta is the alter ego of Miss Daws herself',
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         Row(
-          children: const [
+          children: [
             Icon(Icons.mode_comment_outlined, size: 20),
             SizedBox(width: 16),
             Icon(Icons.favorite, color: Colors.red),
@@ -223,8 +302,8 @@ class _ProfileScreensState extends State<ProfileScreens>
             Text('5k', style: TextStyle(color: Colors.black)),
           ],
         ),
-        const SizedBox(height: 10),
-        const Text('Show more', style: TextStyle(color: Colors.orange)),
+        SizedBox(height: 10),
+        Text('Show more', style: TextStyle(color: Colors.orange)),
       ],
     );
   }

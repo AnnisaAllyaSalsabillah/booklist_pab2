@@ -11,7 +11,6 @@ class EditProfilScreens extends StatefulWidget {
 
 class __EditProfilScreenStateState extends State<EditProfilScreens> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _bioController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
@@ -30,7 +29,8 @@ class __EditProfilScreenStateState extends State<EditProfilScreens> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final doc =
+        await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
     if (data != null) {
       _nameController.text = data['userName'] ?? '';
@@ -60,9 +60,9 @@ class __EditProfilScreenStateState extends State<EditProfilScreens> {
 
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Failed to save profile: $e'),
-      ));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
     } finally {
       setState(() => _isSaving = false);
     }
@@ -82,16 +82,19 @@ class __EditProfilScreenStateState extends State<EditProfilScreens> {
             onPressed: _isSaving ? null : _saveProfile,
             child: const Text(
               'Save',
-              style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
             ),
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             SizedBox(
-               height: 200,
+              height: 200,
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -101,7 +104,7 @@ class __EditProfilScreenStateState extends State<EditProfilScreens> {
                     width: double.infinity,
                     child: const Icon(Icons.camera_alt, size: 50),
                   ),
-                  Positioned(
+                  const Positioned(
                     top: 130,
                     left: 16,
                     child: CircleAvatar(
@@ -123,8 +126,11 @@ class __EditProfilScreenStateState extends State<EditProfilScreens> {
                     TextFormField(
                       controller: _nameController,
                       decoration: const InputDecoration(labelText: 'Name'),
-                      validator: (value) =>
-                          value == null || value.isEmpty ? 'Name is required' : null,
+                      validator:
+                          (value) =>
+                              value == null || value.isEmpty
+                                  ? 'Name is required'
+                                  : null,
                     ),
                     TextFormField(
                       controller: _bioController,
