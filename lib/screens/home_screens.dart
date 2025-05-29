@@ -1,297 +1,227 @@
 import 'dart:convert';
-import 'package:booklist/screens/detail_screens.dart';
-import 'package:booklist/screens/sign_in_screens.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:booklist/screens/add_post_screens.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
 
 class HomeScreens extends StatefulWidget {
-  const HomeScreens({super.key});
+  const HomeScreens({Key? key}) : super(key: key);
 
   @override
   State<HomeScreens> createState() => _HomeScreensState();
 }
 
 class _HomeScreensState extends State<HomeScreens> {
-  String? selectedCategory;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
-  List<String> categories = [
-    'Jalan Rusak',
-    'Marka Pudar',
-    'Lampu Mati',
-    'Trotoar Rusak',
-    'Rambu Rusak',
-    'Jembatan Rusak',
-    'Sampah Menumpuk',
-    'Saluran Tersumbat',
-    'Sungai Tercemar',
-    'Sampah Sungai',
-    'Pohon Tumbang',
-    'Taman Rusak',
-    'Fasilitas Rusak',
-    'Pipa Bocor',
-    'Vandalisme',
-    'Banjir',
-    'Lainnya',
-  ];
+  User? currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    currentUser = _auth.currentUser;
+  }
 
   String formatTime(DateTime dateTime) {
     final now = DateTime.now();
     final diff = now.difference(dateTime);
     if (diff.inSeconds < 60) {
-      return '${diff.inSeconds} secs ago';
+      return '${diff.inSeconds}s ago';
     } else if (diff.inMinutes < 60) {
-      return '${diff.inMinutes} mins ago';
+      return '${diff.inMinutes}m ago';
     } else if (diff.inHours < 24) {
-      return '${diff.inHours} hrs ago';
-    } else if (diff.inHours < 48) {
-      return '1 day ago';
+      return '${diff.inHours}h ago';
     } else {
-      return DateFormat('dd/MM/yyyy').format(dateTime);
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
     }
-  }
-
-  Future<void> signOut() async {
-    await FirebaseAuth.instance.signOut();
-    if (!mounted) return;
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => SignInScreens()),
-      (route) => false,
-    );
-  }
-
-  void _showCategoryFilter() async {
-    final result = await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return SafeArea(
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.75,
-            child: ListView(
-              padding: const EdgeInsets.only(bottom: 24),
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.clear),
-                  title: const Text('Semua Kategori'),
-                  onTap: () => Navigator.pop(context, null),
-                ),
-                const Divider(),
-                ...categories.map(
-                  (category) => ListTile(
-                    title: Text(category),
-                    trailing:
-                        selectedCategory == category
-                            ? Icon(
-                              Icons.check,
-                              color: Theme.of(context).colorScheme.primary,
-                            )
-                            : null,
-                    onTap: () => Navigator.pop(context, category),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    setState(() {
-      selectedCategory = result;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      key: _scaffoldKey,
+      drawer: Drawer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+                border: Border.all(
+                  color: Colors.grey.shade300,
+                  width: 2
+                ),
+              ),
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.amberAccent[100],
+                    child: const Icon(Icons.person_outline, size: 30, color: Colors.amber,),
+
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    currentUser?.displayName ?? 'User',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '@${currentUser?.email?.split('@')[0] ?? 'user'}',
+                    style: const TextStyle(color: Colors.grey),
+                  )
+                ],
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.person_outline),
+              title: const Text('Profile'),
+              onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.dark_mode_outlined),
+              title: const Text('Dark theme'),
+              onTap: () {},
+            )
+          ],
+        ),
+      ),
       appBar: AppBar(
-        title: Text(
-          'Booklist',
-          style: TextStyle(
-            color: Colors.green[600],
-            fontWeight: FontWeight.bold,
-          ),
+        backgroundColor: Colors.amber[200],
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
         actions: [
           IconButton(
-            onPressed: _showCategoryFilter,
-            icon: const Icon(Icons.filter_list),
-            tooltip: 'Filter Kategori',
-          ),
-          IconButton(onPressed: signOut, icon: const Icon(Icons.logout)),
+            icon: const Icon(Icons.search),
+            onPressed: () {},
+          )
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async => setState(() {}),
-        child: StreamBuilder(
-          stream:
-              FirebaseFirestore.instance
-                  .collection('posts')
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
-          builder: (context, snapshot) {
-            if (!snapshot.hasData) {
-              return const Center(child: CircularProgressIndicator());
-            }
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _firestore
+            .collection('posts')
+            .orderBy('createdAt', descending: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final posts = snapshot.data!.docs;
 
-            final posts =
-                snapshot.data!.docs.where((doc) {
-                  final data = doc.data();
-                  final category = data['category'] ?? 'Lainnya';
-                  return selectedCategory == null ||
-                      selectedCategory == category;
-                }).toList();
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 80),
+            itemCount: posts.length,
+            itemBuilder: (context, index) {
+              final data = posts[index].data() as Map<String, dynamic>;
+              final username = data['username'] ?? 'Unknown';
+              final handle = data['handle'] ?? '@unknown';
+              final content = data['content'] ?? '';
+              final createdAt = (data['createdAt'] as Timestamp).toDate();
+              final imageUrls = List<String>.from(data['images'] ?? []);
+              final likeCount = data['likes'] ?? 0;
 
-            if (posts.isEmpty) {
-              return const Center(
-                child: Text("Tidak ada laporan untuk kategori ini."),
-              );
-            }
-
-            return ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: posts.length,
-              itemBuilder: (context, index) {
-                final data = posts[index].data();
-                final imageBase64 = data['image'];
-                final description = data['description'];
-                final createdAtStr = data['createdAt'];
-                final fullName = data['fullName'] ?? 'Anonim';
-                final latitude = data['latitude'];
-                final longitude = data['longitude'];
-                final category = data['category'] ?? 'Lainnya';
-                final createdAt = DateTime.parse(createdAtStr);
-                String heroTag =
-                    'fasum-image-${createdAt.millisecondsSinceEpoch}';
-
-                return InkWell(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder:
-                            (context) => DetailScreen(
-                              imageBase64: imageBase64,
-                              description: description ?? '',
-                              createdAt: createdAt,
-                              fullName: fullName,
-                              latitude: latitude,
-                              longitude: longitude,
-                              category: category,
-                              heroTag: heroTag,
-                            ),
-                      ),
-                    );
-                  },
-                  child: Card(
-                    elevation: 1,
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    shadowColor: Theme.of(context).colorScheme.shadow,
-                    margin: const EdgeInsets.all(10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (imageBase64 != null)
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(10),
-                            ),
-                            child: Hero(
-                              tag: heroTag,
-                              child: Image.memory(
-                                base64Decode(imageBase64),
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: 200,
-                              ),
-                            ),
-                          ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                fullName,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                formatTime(createdAt),
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                description ?? '',
-                                style: const TextStyle(fontSize: 16),
-                                maxLines: 3,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
+                        Row(
+                          children: [
+                            const CircleAvatar(radius: 20, backgroundColor: Colors.grey),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                Text(handle, style: const TextStyle(color: Colors.grey))
+                              ],
+                            )
+                          ],
                         ),
+                        const SizedBox(height: 8),
+                        Text(content),
+                        if (imageUrls.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: imageUrls.take(2).map((url) {
+                              return Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 4),
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(url, height: 150, fit: BoxFit.cover),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          )
+                        ],
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.chat_bubble_outline, size: 20, color: Colors.grey[600]),
+                            const SizedBox(width: 6),
+                            Icon(Icons.favorite_border, size: 20, color: Colors.redAccent),
+                            const SizedBox(width: 2),
+                            Text('$likeCount')
+                          ],
+                        )
                       ],
                     ),
                   ),
-                );
-              },
-            );
-          },
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => const AddPostScreens()),
+                ),
+              );
+            },
           );
         },
-        backgroundColor: Colors.amber[300],
-        child: const Icon(Icons.add, color: Colors.white),
+      ),
+      floatingActionButton: SizedBox(
+        height: 60,
+        width: 60,
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(builder: (context) => const AddPostScreens()),
+            );
+          },
+          backgroundColor: Colors.amber[300],
+          foregroundColor: Colors.white,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.add, size: 32),
+        ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        elevation: 8,
-        color: const Color(0xFFFEF9F1),
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: <Widget>[
-              IconButton(
-                icon: const Icon(Icons.home_outlined),
-                onPressed: () {}, // tambahkan navigasi jika perlu
-              ),
-              const SizedBox(width: 48), // Spasi untuk FAB
-              IconButton(
-                icon: const Icon(Icons.person_outline),
-                onPressed: () {}, // tambahkan navigasi jika perlu
-              ),
-            ],
-          ),
+      bottomNavigationBar: const ClipRRect(
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
         ),
+        child: BottomAppBar(
+          color: Color.fromARGB(255, 252, 234, 209),
+          elevation: 8,
+          shape: CircularNotchedRectangle(),
+          notchMargin: 8,
+          child: SizedBox(
+            height: 40,
+          ),
+        )
       ),
     );
   }
 }
+

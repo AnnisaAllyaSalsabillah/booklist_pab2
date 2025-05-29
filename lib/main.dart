@@ -3,6 +3,7 @@ import 'package:booklist/firebase_options.dart';
 import 'package:booklist/screens/edit_profil.dart';
 import 'package:booklist/screens/home_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
+import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:booklist/screens/splash_screens.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -180,6 +181,7 @@ class _MyAppState extends State<MyApp> {
       // home: HomeScreens(),
        home: ProfileScreens(),
       // home: EditProfilScreens(),
+
     );
   }
 }
