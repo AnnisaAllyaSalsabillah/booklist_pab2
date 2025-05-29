@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:booklist/firebase_options.dart';
+import 'package:booklist/screens/add_post_screens.dart';
 import 'package:booklist/screens/home_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
@@ -177,7 +178,7 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      home: SignInScreens(),
+      home: AddPostScreen(),
     );
   }
 }

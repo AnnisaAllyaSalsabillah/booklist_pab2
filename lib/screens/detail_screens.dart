@@ -49,7 +49,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     final createdAtFormatted = DateFormat(
       'dd MMMM yyyy, HH:mm',
-    ).format(widget.createdAt);
+    ).format(widget.createdAt); 
 
     return Scaffold(
       appBar: AppBar(title: const Text('Detail Laporan')),
