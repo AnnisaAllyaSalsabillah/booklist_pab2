@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:booklist/screens/add_post_screens.dart';
+import 'package:booklist/screens/profile_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
 
 class HomeScreens extends StatefulWidget {
   const HomeScreens({Key? key}) : super(key: key);
@@ -54,43 +54,40 @@ class _HomeScreensState extends State<HomeScreens> {
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
-                border: Border.all(
-                  color: Colors.grey.shade300,
-                  width: 2
-                ),
+                border: Border.all(color: Colors.grey.shade300, width: 2),
               ),
               padding: const EdgeInsets.all(16),
-              child: Column(
+              child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  SizedBox(height: 70),
                   CircleAvatar(
-                    radius: 30,
-                    backgroundColor: Colors.amberAccent[100],
-                    child: const Icon(Icons.person_outline, size: 30, color: Colors.amber,),
-
+                    radius: 45,
+                    backgroundImage: AssetImage('assets/radius_booklist.png'),
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    currentUser?.displayName ?? 'User',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    '@${currentUser?.email?.split('@')[0] ?? 'user'}',
-                    style: const TextStyle(color: Colors.grey),
-                  )
+                  SizedBox(height: 70),
                 ],
               ),
             ),
+
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Profile'),
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreens(),
+                  ),
+                );
+              },
             ),
+
             ListTile(
               leading: const Icon(Icons.dark_mode_outlined),
               title: const Text('Dark theme'),
               onTap: () {},
-            )
+            ),
           ],
         ),
       ),
@@ -100,18 +97,14 @@ class _HomeScreensState extends State<HomeScreens> {
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search),
-            onPressed: () {},
-          )
-        ],
+        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('posts')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream:
+            _firestore
+                .collection('posts')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -134,7 +127,9 @@ class _HomeScreensState extends State<HomeScreens> {
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Card(
                   elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(12),
                     child: Column(
@@ -142,15 +137,26 @@ class _HomeScreensState extends State<HomeScreens> {
                       children: [
                         Row(
                           children: [
-                            const CircleAvatar(radius: 20, backgroundColor: Colors.grey),
+                            const CircleAvatar(
+                              radius: 20,
+                              backgroundColor: Colors.grey,
+                            ),
                             const SizedBox(width: 10),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(username, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                Text(handle, style: const TextStyle(color: Colors.grey))
+                                Text(
+                                  username,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  handle,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
                               ],
-                            )
+                            ),
                           ],
                         ),
                         const SizedBox(height: 8),
@@ -158,29 +164,42 @@ class _HomeScreensState extends State<HomeScreens> {
                         if (imageUrls.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Row(
-                            children: imageUrls.take(2).map((url) {
-                              return Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 4),
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: Image.network(url, height: 150, fit: BoxFit.cover),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          )
+                            children:
+                                imageUrls.take(2).map((url) {
+                                  return Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(right: 4),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: Image.network(
+                                          url,
+                                          height: 150,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
                         ],
                         const SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.chat_bubble_outline, size: 20, color: Colors.grey[600]),
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 20,
+                              color: Colors.grey[600],
+                            ),
                             const SizedBox(width: 6),
-                            Icon(Icons.favorite_border, size: 20, color: Colors.redAccent),
+                            Icon(
+                              Icons.favorite_border,
+                              size: 20,
+                              color: Colors.redAccent,
+                            ),
                             const SizedBox(width: 2),
-                            Text('$likeCount')
+                            Text('$likeCount'),
                           ],
-                        )
+                        ),
                       ],
                     ),
                   ),
@@ -216,12 +235,9 @@ class _HomeScreensState extends State<HomeScreens> {
           elevation: 8,
           shape: CircularNotchedRectangle(),
           notchMargin: 8,
-          child: SizedBox(
-            height: 40,
-          ),
-        )
+          child: SizedBox(height: 40),
+        ),
       ),
     );
   }
 }
-

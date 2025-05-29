@@ -1,13 +1,14 @@
 import 'dart:io';
 
-import 'package:booklist/screens/edit_profil.dart';
-import 'package:booklist/screens/settings_akun.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import 'package:booklist/screens/profile_provider.dart';
+
 
 class ProfileScreens extends StatefulWidget {
   const ProfileScreens({super.key});
@@ -25,6 +26,9 @@ class _ProfileScreensState extends State<ProfileScreens>
   String _backgroundImageUrl = '';
   bool _isLoading = true;
   late TabController _tabController;
+
+  File? _profileImageFile;
+  File? _backgroundImageFile;
 
   @override
   void initState() {
@@ -92,7 +96,18 @@ class _ProfileScreensState extends State<ProfileScreens>
             onTap: () async {
               Navigator.pop(context);
               final picked = await picker.pickImage(source: ImageSource.camera);
-              if (picked != null) await _uploadImage(File(picked.path), type);
+              if (picked != null) {
+                if (type == 'profile') {
+                  setState(() {
+                    _profileImageFile = File(picked.path);
+                  });
+                } else {
+                  setState(() {
+                    _backgroundImageFile = File(picked.path);
+                  });
+                }
+                await _uploadImage(File(picked.path), type);
+              }
             },
           ),
           ListTile(
@@ -100,8 +115,20 @@ class _ProfileScreensState extends State<ProfileScreens>
             title: const Text("Pilih dari Galeri"),
             onTap: () async {
               Navigator.pop(context);
-              final picked = await picker.pickImage(source: ImageSource.gallery);
-              if (picked != null) await _uploadImage(File(picked.path), type);
+              final picked =
+                  await picker.pickImage(source: ImageSource.gallery);
+              if (picked != null) {
+                if (type == 'profile') {
+                  setState(() {
+                    _profileImageFile = File(picked.path);
+                  });
+                } else {
+                  setState(() {
+                    _backgroundImageFile = File(picked.path);
+                  });
+                }
+                await _uploadImage(File(picked.path), type);
+              }
             },
           ),
         ],
@@ -126,8 +153,13 @@ class _ProfileScreensState extends State<ProfileScreens>
       setState(() {
         if (type == 'profile') {
           _profileImageUrl = url;
+          _profileImageFile = null; 
+
+          Provider.of<ProfileProvider>(context, listen: false)
+              .setProfileImage(url);
         } else {
           _backgroundImageUrl = url;
+          _backgroundImageFile = null;
         }
       });
     } catch (e) {
@@ -144,19 +176,6 @@ class _ProfileScreensState extends State<ProfileScreens>
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreens(),
-                ),
-              );
-            },
-          ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -174,10 +193,12 @@ class _ProfileScreensState extends State<ProfileScreens>
                             width: double.infinity,
                             decoration: BoxDecoration(
                               image: DecorationImage(
-                                image: _backgroundImageUrl.isNotEmpty
-                                    ? NetworkImage(_backgroundImageUrl)
-                                    : const NetworkImage(
-                                        'https://i.imgur.com/zL4Krbz.jpg'),
+                                image: _backgroundImageFile != null
+                                    ? FileImage(_backgroundImageFile!)
+                                    : (_backgroundImageUrl.isNotEmpty
+                                        ? NetworkImage(_backgroundImageUrl)
+                                        : const NetworkImage(
+                                            'https://i.imgur.com/zL4Krbz.jpg')) as ImageProvider,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -191,10 +212,13 @@ class _ProfileScreensState extends State<ProfileScreens>
                             child: CircleAvatar(
                               radius: 50,
                               backgroundColor: Colors.grey[300],
-                              backgroundImage: _profileImageUrl.isNotEmpty
-                                  ? NetworkImage(_profileImageUrl)
-                                  : null,
-                              child: _profileImageUrl.isEmpty
+                              backgroundImage: _profileImageFile != null
+                                  ? FileImage(_profileImageFile!)
+                                  : (_profileImageUrl.isNotEmpty
+                                      ? NetworkImage(_profileImageUrl)
+                                      : null) as ImageProvider?,
+                              child: (_profileImageFile == null &&
+                                      _profileImageUrl.isEmpty)
                                   ? const Icon(Icons.person, size: 40)
                                   : null,
                             ),
@@ -233,17 +257,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                             ],
                           ),
                         ),
-                        OutlinedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const EditProfilScreens(),
-                              ),
-                            );
-                          },
-                          child: const Text('Edit profile'),
-                        ),
+                        
                       ],
                     ),
                   ),

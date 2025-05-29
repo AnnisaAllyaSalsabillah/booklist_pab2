@@ -1,16 +1,19 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:booklist/firebase_options.dart';
 import 'package:booklist/screens/add_post_screens.dart';
-import 'package:booklist/screens/edit_profil.dart';
 import 'package:booklist/screens/home_screens.dart';
+import 'package:booklist/screens/profile_provider.dart';
 import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:booklist/screens/splash_screens.dart';
+import 'package:booklist/screens/profile_provider.dart'; 
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart'; 
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -60,30 +63,24 @@ Future<void> showNotificationFromData(Map<String, dynamic> data) async {
     }
   }
 
-  final styleInfo =
-      largeIconBitmap != null
-          ? BigPictureStyleInformation(
-            largeIconBitmap,
-            contentTitle: title,
-            summaryText: '$body\n\nDari: $sender - $time',
-            largeIcon: largeIconBitmap,
-            hideExpandedLargeIcon: true,
-          )
-          : BigTextStyleInformation(
-            '$body\n\nDari: $sender\nWaktu: $time',
-            contentTitle: title,
-          );
-
-  final simpleStyleInfo = BigTextStyleInformation(
-    '$body\n\nDari: $sender\nWaktu: $time',
-    contentTitle: title,
-  );
+  final styleInfo = largeIconBitmap != null
+      ? BigPictureStyleInformation(
+          largeIconBitmap,
+          contentTitle: title,
+          summaryText: '$body\n\nDari: $sender - $time',
+          largeIcon: largeIconBitmap,
+          hideExpandedLargeIcon: true,
+        )
+      : BigTextStyleInformation(
+          '$body\n\nDari: $sender\nWaktu: $time',
+          contentTitle: title,
+        );
 
   final androidDetails = AndroidNotificationDetails(
     'detailed_channel',
     'Notifikasi Detail',
     channelDescription: 'Notifikasi dengan detail tambahan',
-    styleInformation: simpleStyleInfo,
+    styleInformation: styleInfo,
     largeIcon: largeIconBitmap,
     importance: Importance.max,
     priority: Priority.max,
@@ -130,7 +127,14 @@ void main() async {
   );
   await flutterLocalNotificationsPlugin.initialize(settings);
 
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProfileProvider()), // <== provider ditambahkan
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -179,10 +183,10 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      // home: HomeScreens(),
-       home: ProfileScreens(),
+      //home: HomeScreens(),
+      home: SignInScreens(),
+      //home: AddPostScreen(),
       // home: EditProfilScreens(),
-
     );
   }
 }
