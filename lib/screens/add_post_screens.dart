@@ -109,7 +109,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
                   child: const Text("Post", style: TextStyle(color: Colors.white)),
                 )
