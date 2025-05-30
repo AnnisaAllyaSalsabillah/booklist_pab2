@@ -178,9 +178,9 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      //home: HomeScreens(),
+      home: HomeScreens(),
         //home: SignInScreens(),
-       home: AddPostScreen(),
+       //home: AddPostScreen(),
       // home: EditProfilScreens(),
       //home: ProfileScreens(),
 

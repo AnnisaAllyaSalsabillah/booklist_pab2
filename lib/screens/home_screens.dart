@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:booklist/screens/add_post_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
+import 'package:booklist/screens/search_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +70,6 @@ class _HomeScreensState extends State<HomeScreens> {
                 ],
               ),
             ),
-
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Profile'),
@@ -82,7 +82,6 @@ class _HomeScreensState extends State<HomeScreens> {
                 );
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.dark_mode_outlined),
               title: const Text('Dark theme'),
@@ -97,7 +96,17 @@ class _HomeScreensState extends State<HomeScreens> {
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
         ),
-        actions: [IconButton(icon: const Icon(Icons.search), onPressed: () {})],
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => SearchScreens()),
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream:
@@ -116,11 +125,13 @@ class _HomeScreensState extends State<HomeScreens> {
             itemCount: posts.length,
             itemBuilder: (context, index) {
               final data = posts[index].data() as Map<String, dynamic>;
+
               final username = data['username'] ?? 'Unknown';
               final handle = data['handle'] ?? '@unknown';
               final content = data['content'] ?? '';
+              final location = data['location'] ?? '';
               final createdAt = (data['createdAt'] as Timestamp).toDate();
-              final imageUrls = List<String>.from(data['images'] ?? []);
+              final imageBase64List = List<String>.from(data['images'] ?? []);
               final likeCount = data['likes'] ?? 0;
 
               return Padding(
@@ -157,29 +168,45 @@ class _HomeScreensState extends State<HomeScreens> {
                                 ),
                               ],
                             ),
+                            const Spacer(),
+                            Text(
+                              formatTime(createdAt),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 8),
                         Text(content),
-                        if (imageUrls.isNotEmpty) ...[
-                          const SizedBox(height: 8),
+                        if (location.isNotEmpty) ...[
+                          const SizedBox(height: 4),
                           Row(
-                            children:
-                                imageUrls.take(2).map((url) {
-                                  return Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(right: 4),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image.network(
-                                          url,
-                                          height: 150,
-                                          fit: BoxFit.cover,
-                                        ),
-                                      ),
-                                    ),
-                                  );
-                                }).toList(),
+                            children: [
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                location,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ],
+                        if (imageBase64List.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(
+                              base64Decode(imageBase64List[0]),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ],
                         const SizedBox(height: 8),
