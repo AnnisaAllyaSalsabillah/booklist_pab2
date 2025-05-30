@@ -25,11 +25,9 @@ dependencies:
   shimmer: ^3.0.0
   flutter_local_notifications: ^17.1.2
   shared_preferences: ^2.5.3
-  provider: ^6.1.5
   flutter_native_splash: ^2.4.6
   flutter_localizations:
     sdk: flutter
-  firebase_storage: ^11.7.7
 
 dev_dependencies:
   flutter_test:

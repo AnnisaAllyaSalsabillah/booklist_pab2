@@ -1,14 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import 'package:booklist/screens/profile_provider.dart';
-
 
 class ProfileScreens extends StatefulWidget {
   const ProfileScreens({super.key});
@@ -22,8 +19,8 @@ class _ProfileScreensState extends State<ProfileScreens>
   String _userName = '';
   String _email = '';
   String _phone = '';
-  String _profileImageUrl = '';
-  String _backgroundImageUrl = '';
+  String _profileImageBase64 = '';
+  String _backgroundImageBase64 = '';
   bool _isLoading = true;
   late TabController _tabController;
 
@@ -55,8 +52,8 @@ class _ProfileScreensState extends State<ProfileScreens>
             _userName = data['userName'] ?? '';
             _email = data['email'] ?? '';
             _phone = data['phone'] ?? '';
-            _profileImageUrl = data['profileImageUrl'] ?? '';
-            _backgroundImageUrl = data['backgroundImageUrl'] ?? '';
+            _profileImageBase64 = data['profileImageBase64'] ?? '';
+            _backgroundImageBase64 = data['backgroundImageBase64'] ?? '';
           });
         }
       }
@@ -70,9 +67,7 @@ class _ProfileScreensState extends State<ProfileScreens>
   }
 
   void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _signOut() async {
@@ -106,7 +101,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                     _backgroundImageFile = File(picked.path);
                   });
                 }
-                await _uploadImage(File(picked.path), type);
+                await _saveImageAsBase64(File(picked.path), type);
               }
             },
           ),
@@ -127,7 +122,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                     _backgroundImageFile = File(picked.path);
                   });
                 }
-                await _uploadImage(File(picked.path), type);
+                await _saveImageAsBase64(File(picked.path), type);
               }
             },
           ),
@@ -136,34 +131,44 @@ class _ProfileScreensState extends State<ProfileScreens>
     );
   }
 
-  Future<void> _uploadImage(File image, String type) async {
+  Future<void> _saveImageAsBase64(File image, String type) async {
     try {
       final uid = FirebaseAuth.instance.currentUser?.uid;
       if (uid == null) return;
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('user_images/$uid/${type}_image.jpg');
-      await ref.putFile(image);
-      final url = await ref.getDownloadURL();
+
+      final bytes = await image.readAsBytes();
+      final base64Image = base64Encode(bytes);
 
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        type == 'profile' ? 'profileImageUrl' : 'backgroundImageUrl': url,
+        type == 'profile' ? 'profileImageBase64' : 'backgroundImageBase64': base64Image,
       });
 
       setState(() {
         if (type == 'profile') {
-          _profileImageUrl = url;
-          _profileImageFile = null; 
-
-          Provider.of<ProfileProvider>(context, listen: false)
-              .setProfileImage(url);
+          _profileImageBase64 = base64Image;
+          _profileImageFile = null; // clear preview after saved
         } else {
-          _backgroundImageUrl = url;
+          _backgroundImageBase64 = base64Image;
           _backgroundImageFile = null;
         }
       });
     } catch (e) {
-      _showErrorMessage('Upload gagal: $e');
+      _showErrorMessage('Gagal menyimpan gambar: $e');
+    }
+  }
+
+  ImageProvider _getImageProvider(String base64String, File? file, String fallbackUrl) {
+    if (file != null) {
+      return FileImage(file);
+    } else if (base64String.isNotEmpty) {
+      try {
+        final bytes = base64Decode(base64String);
+        return MemoryImage(bytes);
+      } catch (_) {
+        return NetworkImage(fallbackUrl);
+      }
+    } else {
+      return NetworkImage(fallbackUrl);
     }
   }
 
@@ -176,6 +181,12 @@ class _ProfileScreensState extends State<ProfileScreens>
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: _signOut,
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -193,12 +204,11 @@ class _ProfileScreensState extends State<ProfileScreens>
                             width: double.infinity,
                             decoration: BoxDecoration(
                               image: DecorationImage(
-                                image: _backgroundImageFile != null
-                                    ? FileImage(_backgroundImageFile!)
-                                    : (_backgroundImageUrl.isNotEmpty
-                                        ? NetworkImage(_backgroundImageUrl)
-                                        : const NetworkImage(
-                                            'https://i.imgur.com/zL4Krbz.jpg')) as ImageProvider,
+                                image: _getImageProvider(
+                                  _backgroundImageBase64,
+                                  _backgroundImageFile,
+                                  'https://i.imgur.com/zL4Krbz.jpg',
+                                ),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -214,11 +224,11 @@ class _ProfileScreensState extends State<ProfileScreens>
                               backgroundColor: Colors.grey[300],
                               backgroundImage: _profileImageFile != null
                                   ? FileImage(_profileImageFile!)
-                                  : (_profileImageUrl.isNotEmpty
-                                      ? NetworkImage(_profileImageUrl)
-                                      : null) as ImageProvider?,
+                                  : (_profileImageBase64.isNotEmpty
+                                      ? MemoryImage(base64Decode(_profileImageBase64))
+                                      : null),
                               child: (_profileImageFile == null &&
-                                      _profileImageUrl.isEmpty)
+                                      _profileImageBase64.isEmpty)
                                   ? const Icon(Icons.person, size: 40)
                                   : null,
                             ),
@@ -257,7 +267,6 @@ class _ProfileScreensState extends State<ProfileScreens>
                             ],
                           ),
                         ),
-                        
                       ],
                     ),
                   ),

@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 class AddPostScreen extends StatefulWidget {
   const AddPostScreen({super.key});
@@ -17,13 +18,28 @@ class AddPostScreen extends StatefulWidget {
 class _AddPostScreenState extends State<AddPostScreen> {
   final TextEditingController _controller = TextEditingController();
   File? _selectedImage;
+  String? _base64Image;
   String _location = "";
 
   Future<void> _pickImage() async {
     final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (pickedFile != null) {
+      File imageFile = File(pickedFile.path);
       setState(() {
-        _selectedImage = File(pickedFile.path);
+        _selectedImage = imageFile;
+      });
+      await _compressAndEncodeImage(imageFile);
+    }
+  }
+
+  Future<void> _compressAndEncodeImage(File image) async {
+    final compressed = await FlutterImageCompress.compressWithFile(
+      image.path,
+      quality: 50,
+    );
+    if (compressed != null) {
+      setState(() {
+        _base64Image = base64Encode(compressed);
       });
     }
   }
@@ -49,34 +65,14 @@ class _AddPostScreenState extends State<AddPostScreen> {
     });
   }
 
-  Future<String?> _uploadImage(File imageFile) async {
-    try {
-      final userId = FirebaseAuth.instance.currentUser!.uid;
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('posts')
-          .child('$userId-${DateTime.now().millisecondsSinceEpoch}.jpg');
-      await ref.putFile(imageFile);
-      return await ref.getDownloadURL();
-    } catch (e) {
-      print("Upload failed: $e");
-      return null;
-    }
-  }
-
   Future<void> _submitPost() async {
     final text = _controller.text.trim();
-    if (text.isEmpty && _selectedImage == null) return;
-
-    String? imageUrl;
-    if (_selectedImage != null) {
-      imageUrl = await _uploadImage(_selectedImage!);
-    }
+    if (text.isEmpty && _base64Image == null) return;
 
     final user = FirebaseAuth.instance.currentUser!;
     final post = {
       'text': text,
-      'imageUrl': imageUrl,
+      'base64Image': _base64Image,
       'location': _location,
       'createdAt': Timestamp.now(),
       'userId': user.uid,
