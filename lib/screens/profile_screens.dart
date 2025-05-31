@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileScreens extends StatefulWidget {
@@ -20,12 +20,11 @@ class _ProfileScreensState extends State<ProfileScreens>
   String _email = '';
   String _phone = '';
   String _profileImageBase64 = '';
-  String _backgroundImageBase64 = '';
   bool _isLoading = true;
   late TabController _tabController;
+  final ImagePicker _picker = ImagePicker();
 
   File? _profileImageFile;
-  File? _backgroundImageFile;
 
   @override
   void initState() {
@@ -52,8 +51,7 @@ class _ProfileScreensState extends State<ProfileScreens>
             _userName = data['userName'] ?? '';
             _email = data['email'] ?? '';
             _phone = data['phone'] ?? '';
-            _profileImageBase64 = data['profileImageBase64'] ?? '';
-            _backgroundImageBase64 = data['backgroundImageBase64'] ?? '';
+            _profileImageBase64 = data['profileImage'] ?? '';
           });
         }
       }
@@ -67,7 +65,9 @@ class _ProfileScreensState extends State<ProfileScreens>
   }
 
   void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _signOut() async {
@@ -79,101 +79,111 @@ class _ProfileScreensState extends State<ProfileScreens>
     );
   }
 
-  Future<void> _pickImage({required String type}) async {
-    final picker = ImagePicker();
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Wrap(
-        children: [
-          ListTile(
-            leading: const Icon(Icons.camera_alt),
-            title: const Text("Ambil dari Kamera"),
-            onTap: () async {
-              Navigator.pop(context);
-              final picked = await picker.pickImage(source: ImageSource.camera);
-              if (picked != null) {
-                if (type == 'profile') {
-                  setState(() {
-                    _profileImageFile = File(picked.path);
-                  });
-                } else {
-                  setState(() {
-                    _backgroundImageFile = File(picked.path);
-                  });
-                }
-                await _saveImageAsBase64(File(picked.path), type);
-              }
-            },
-          ),
-          ListTile(
-            leading: const Icon(Icons.photo),
-            title: const Text("Pilih dari Galeri"),
-            onTap: () async {
-              Navigator.pop(context);
-              final picked =
-                  await picker.pickImage(source: ImageSource.gallery);
-              if (picked != null) {
-                if (type == 'profile') {
-                  setState(() {
-                    _profileImageFile = File(picked.path);
-                  });
-                } else {
-                  setState(() {
-                    _backgroundImageFile = File(picked.path);
-                  });
-                }
-                await _saveImageAsBase64(File(picked.path), type);
-              }
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _saveImageAsBase64(File image, String type) async {
+  Future<void> _compressAndEncodeImageProfile() async {
+    if (_profileImageFile == null) return;
     try {
-      final uid = FirebaseAuth.instance.currentUser?.uid;
-      if (uid == null) return;
+      final compressedImage = await FlutterImageCompress.compressWithFile(
+        _profileImageFile!.path,
+        quality: 50,
+      );
 
-      final bytes = await image.readAsBytes();
-      final base64Image = base64Encode(bytes);
-
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        type == 'profile' ? 'profileImageBase64' : 'backgroundImageBase64': base64Image,
-      });
+      if (compressedImage == null) return;
 
       setState(() {
-        if (type == 'profile') {
-          _profileImageBase64 = base64Image;
-          _profileImageFile = null; // clear preview after saved
-        } else {
-          _backgroundImageBase64 = base64Image;
-          _backgroundImageFile = null;
-        }
+        _profileImageBase64 = base64Encode(compressedImage);
       });
     } catch (e) {
-      _showErrorMessage('Gagal menyimpan gambar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to compress image: $e')));
+      }
     }
   }
 
-  ImageProvider _getImageProvider(String base64String, File? file, String fallbackUrl) {
-    if (file != null) {
-      return FileImage(file);
-    } else if (base64String.isNotEmpty) {
-      try {
-        final bytes = base64Decode(base64String);
-        return MemoryImage(bytes);
-      } catch (_) {
-        return NetworkImage(fallbackUrl);
+  Future<void> _pickProfileImage(ImageSource source) async {
+    try {
+      final pickedFile = await _picker.pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _profileImageFile = File(pickedFile.path);
+        });
+        await _compressAndEncodeImageProfile();
+        await _saveImageAsBase64();
       }
-    } else {
-      return NetworkImage(fallbackUrl);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to pick image: $e')));
+      }
     }
+  }
+
+  Future<void> _saveImageAsBase64() async {
+    if (_profileImageBase64 == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please add an image and description.')),
+      );
+      return;
+    }
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'profileImage': _profileImageBase64,
+    });
+
+    if (!mounted) return;
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Wrap(
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a picture'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickProfileImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickProfileImage(ImageSource.gallery);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.cancel),
+                title: const Text('Cancel'),
+                onTap: () => Navigator.pop(context),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final imageWidget =
+        _profileImageFile != null
+            ? Image.file(_profileImageFile!, fit: BoxFit.cover)
+            : (_profileImageBase64.isNotEmpty
+                ? Image.memory(
+                  base64Decode(_profileImageBase64),
+                  fit: BoxFit.cover,
+                )
+                : const Icon(Icons.person, size: 100, color: Colors.grey));
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profil'),
@@ -182,111 +192,82 @@ class _ProfileScreensState extends State<ProfileScreens>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: _signOut,
-          ),
+          IconButton(icon: const Icon(Icons.logout), onPressed: _signOut),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SafeArea(
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 200,
-                    child: Stack(
-                      children: [
-                        GestureDetector(
-                          onTap: () => _pickImage(type: 'background'),
-                          child: Container(
-                            height: 200,
-                            width: double.infinity,
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: _getImageProvider(
-                                  _backgroundImageBase64,
-                                  _backgroundImageFile,
-                                  'https://i.imgur.com/zL4Krbz.jpg',
-                                ),
-                                fit: BoxFit.cover,
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SafeArea(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 200,
+                      child: Stack(
+                        children: [
+                          GestureDetector(
+                            onTap: _showImageSourceDialog,
+                            child: Container(
+                              height: 250,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: imageWidget,
                               ),
                             ),
                           ),
-                        ),
-                        Positioned(
-                          top: 100,
-                          left: 16,
-                          child: GestureDetector(
-                            onTap: () => _pickImage(type: 'profile'),
-                            child: CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.grey[300],
-                              backgroundImage: _profileImageFile != null
-                                  ? FileImage(_profileImageFile!)
-                                  : (_profileImageBase64.isNotEmpty
-                                      ? MemoryImage(base64Decode(_profileImageBase64))
-                                      : null),
-                              child: (_profileImageFile == null &&
-                                      _profileImageBase64.isEmpty)
-                                  ? const Icon(Icons.person, size: 40)
-                                  : null,
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 80),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _userName,
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _email,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Row(
-                      children: [
-                        const SizedBox(width: 80),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                _userName,
-                                style: const TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _email,
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                _phone.isNotEmpty ? _phone : '-',
-                                style: const TextStyle(color: Colors.grey),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: Colors.orange,
-                    unselectedLabelColor: Colors.black,
-                    indicatorColor: Colors.orange,
-                    tabs: const [Tab(text: 'Post'), Tab(text: 'Likes')],
-                  ),
-                  Expanded(
-                    child: TabBarView(
+                    const SizedBox(height: 8),
+                    TabBar(
                       controller: _tabController,
-                      children: [_buildPostList(), _buildLikesList()],
+                      labelColor: Colors.orange,
+                      unselectedLabelColor: Colors.black,
+                      indicatorColor: Colors.orange,
+                      tabs: const [Tab(text: 'Post'), Tab(text: 'Likes')],
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [_buildPostList(), _buildLikesList()],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
     );
   }
 

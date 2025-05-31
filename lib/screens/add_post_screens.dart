@@ -20,9 +20,33 @@ class _AddPostScreenState extends State<AddPostScreen> {
   File? _selectedImage;
   String? _base64Image;
   String _location = "";
+  String? _profileImageBase64; // Simpan profile image user base64
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserProfileImage();
+  }
+
+  Future<void> _loadUserProfileImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    if (doc.exists) {
+      final data = doc.data();
+      if (data != null && data['profileImage'] != null && data['profileImage'] is String && data['profileImage'].isNotEmpty) {
+        setState(() {
+          _profileImageBase64 = data['profileImage'];
+        });
+      }
+    }
+  }
 
   Future<void> _pickImage() async {
-    final pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+    );
     if (pickedFile != null) {
       File imageFile = File(pickedFile.path);
       setState(() {
@@ -55,10 +79,13 @@ class _AddPostScreenState extends State<AddPostScreen> {
     if (permission == LocationPermission.deniedForever) return;
 
     Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
+      desiredAccuracy: LocationAccuracy.high,
+    );
 
-    List<Placemark> placemarks =
-        await placemarkFromCoordinates(position.latitude, position.longitude);
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
     Placemark place = placemarks[0];
     setState(() {
       _location = "${place.locality}, ${place.country}";
@@ -70,12 +97,28 @@ class _AddPostScreenState extends State<AddPostScreen> {
     if (text.isEmpty && _base64Image == null) return;
 
     final user = FirebaseAuth.instance.currentUser!;
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .get();
+
+    final userData = userDoc.data();
+
+    final username = userData?['username'] ?? 'Unknown';
+    final handle = userData?['handle'] ?? '@unknown';
+    final email = userData?['email'] ?? '';
+    final profileImage = userData?['profileImage'] ?? '';
+
     final post = {
-      'text': text,
-      'base64Image': _base64Image,
+      'userId': user.uid,
+      'username': username,
+      'email': email,
+      'profileImage': profileImage, // base64 string
+      'content': text,
+      'images': _base64Image != null ? [_base64Image] : [],
       'location': _location,
       'createdAt': Timestamp.now(),
-      'userId': user.uid,
+      'likes': 0,
     };
 
     await FirebaseFirestore.instance.collection('posts').add(post);
@@ -107,8 +150,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                   ),
-                  child: const Text("Post", style: TextStyle(color: Colors.white)),
-                )
+                  child: const Text(
+                    "Post",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
               ],
             ),
           ),
@@ -117,10 +163,16 @@ class _AddPostScreenState extends State<AddPostScreen> {
       body: Column(
         children: [
           ListTile(
-            leading: const CircleAvatar(
-              backgroundColor: Colors.grey,
-              radius: 20,
-            ),
+            leading: _profileImageBase64 != null && _profileImageBase64!.isNotEmpty
+                ? CircleAvatar(
+                    radius: 20,
+                    backgroundImage: MemoryImage(base64Decode(_profileImageBase64!)),
+                  )
+                : const CircleAvatar(
+                    backgroundColor: Colors.grey,
+                    radius: 20,
+                    child: Icon(Icons.person),
+                  ),
             title: TextField(
               controller: _controller,
               decoration: const InputDecoration(
@@ -135,7 +187,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(_selectedImage!, height: 200, fit: BoxFit.cover),
+                child: Image.file(
+                  _selectedImage!,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
           if (_location.isNotEmpty)
@@ -143,7 +199,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on_outlined, size: 16, color: Colors.grey),
+                  const Icon(
+                    Icons.location_on_outlined,
+                    size: 16,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(width: 4),
                   Text(_location, style: const TextStyle(color: Colors.grey)),
                 ],
@@ -165,7 +225,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
