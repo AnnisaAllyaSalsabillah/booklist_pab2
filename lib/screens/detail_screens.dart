@@ -1,164 +1,153 @@
 import 'dart:convert';
-
-import 'package:booklist/screens/full_image_screens.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class DetailScreen extends StatefulWidget {
-  const DetailScreen({
-    super.key,
-    required this.imageBase64,
-    required this.description,
-    required this.createdAt,
-    required this.fullName,
-    required this.latitude,
-    required this.longitude,
-    required this.category,
-    required this.heroTag,
-  });
+  final String postId;
 
-  final String imageBase64;
-  final String description;
-  final DateTime createdAt;
-  final String fullName;
-  final double latitude;
-  final double longitude;
-  final String category;
-  final String heroTag;
+  const DetailScreen({Key? key, required this.postId}) : super(key: key);
 
   @override
   State<DetailScreen> createState() => _DetailScreenState();
 }
 
 class _DetailScreenState extends State<DetailScreen> {
-  Future<void> openMap() async {
-    final uri = Uri.parse(
-      'https://www.google.com/maps/search/?api=1&query=${widget.latitude},${widget.longitude}',
-    );
-    final success = await launchUrl(uri, mode: LaunchMode.externalApplication);
-    if (!mounted) return;
-    if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tidak bisa membuka Google Maps')),
-      );
+  Map<String, dynamic>? _post;
+  Map<String, dynamic>? _user;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchPostAndUser();
+  }
+
+  Future<void> fetchPostAndUser() async {
+    try {
+      final postDoc = await FirebaseFirestore.instance
+          .collection('posts')
+          .doc(widget.postId)
+          .get();
+
+      final postData = postDoc.data();
+      if (postData != null) {
+        final userId = postData['userId'];
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+
+        final userData = userDoc.data();
+
+        setState(() {
+          _post = postData;
+          _user = userData;
+          _isLoading = false;
+        });
+      } else {
+        setState(() => _isLoading = false);
+      }
+    } catch (e) {
+      print('Error fetching post/user data: $e');
+      setState(() => _isLoading = false);
     }
+  }
+
+  Widget buildImageList(List<dynamic> images) {
+    return Column(
+      children: images.map((img) {
+        try {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Image.memory(
+              base64Decode(img),
+              fit: BoxFit.cover,
+            ),
+          );
+        } catch (_) {
+          return const SizedBox();
+        }
+      }).toList(),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final createdAtFormatted = DateFormat(
-      'dd MMMM yyyy, HH:mm',
-    ).format(widget.createdAt); 
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_post == null) {
+      return const Scaffold(
+        body: Center(child: Text("Post not found")),
+      );
+    }
+
+    final username = _user?['userName'] ?? 'Unknown';
+    final profileImage = _user?['profileImage'];
+    final content = _post!['content'] ?? '';
+    final images = List<String>.from(_post!['images'] ?? []);
+    final location = _post!['location'] ?? '';
+    final timestamp = _post!['createdAt'] != null
+        ? (_post!['createdAt'] as Timestamp).toDate()
+        : null;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail Laporan')),
+      appBar: AppBar(
+        title: const Text('Detail Post'),
+      ),
       body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
+            Row(
               children: [
-                Hero(
-                  tag: widget.heroTag,
-                  child: Image.memory(
-                    base64Decode(widget.imageBase64),
-                    width: double.infinity,
-                    height: 250,
-                    fit: BoxFit.cover,
+                profileImage != null
+                    ? CircleAvatar(
+                        radius: 24,
+                        backgroundImage: MemoryImage(base64Decode(profileImage)),
+                      )
+                    : const CircleAvatar(radius: 24, child: Icon(Icons.person)),
+                const SizedBox(width: 12),
+                Text(
+                  username,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
-                ),
-                Positioned(
-                  top: 12,
-                  right: 12,
-                  child: IconButton(
-                    icon: const Icon(Icons.fullscreen, color: Colors.white),
-                    onPressed: () {
-                      Navigator.push(
-                        context, 
-                        MaterialPageRoute(
-                          builder: (_) => FullImageScreens(
-                            imageBase64: widget.imageBase64,
-                          ),
-                        ),
-                      );
-                    },
-                    tooltip: 'Lihat gambar penuh',
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.black45,
-                    ),
-                  ),
-                ),
+                )
               ],
             ),
-                        Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Kiri: Kategori & Waktu
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.category,
-                                  size: 20,
-                                  color: Colors.red,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  widget.category,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                                                        const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.access_time,
-                                  size: 20,
-                                  color: Colors.blue,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  createdAtFormatted,
-                                  style: const TextStyle(fontSize: 14),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Kanan: Icon map
-                      IconButton(
-                        onPressed: openMap,
-                        icon: const Icon(
-                          Icons.map,
-                          size: 38,
-                          color: Colors.lightGreen,
-                        ),
-                        tooltip: "Buka di Google Maps",
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    widget.description,
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                ],
-              ),
+            const SizedBox(height: 16),
+            Text(
+              content,
+              style: const TextStyle(fontSize: 16),
             ),
+            const SizedBox(height: 12),
+            if (images.isNotEmpty) buildImageList(images),
+            if (location.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 16),
+                    const SizedBox(width: 4),
+                    Text(location),
+                  ],
+                ),
+              ),
+            if (timestamp != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Posted on ${timestamp.toLocal().toString().split('.').first}',
+                  style: const TextStyle(color: Colors.grey),
+                ),
+              ),
+            // TODO: Tambahkan komentar & like di bawah ini
           ],
         ),
       ),

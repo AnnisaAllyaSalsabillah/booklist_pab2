@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:booklist/screens/add_post_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/search_screens.dart';
+import 'package:booklist/screens/detail_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -91,7 +92,7 @@ class _HomeScreensState extends State<HomeScreens> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: Colors.amber[200],
+        backgroundColor: Color(0xFFAC6F17),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -152,107 +153,119 @@ class _HomeScreensState extends State<HomeScreens> {
                   return Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    child: Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                profileImageBase64 != ''
-                                    ? CircleAvatar(
-                                        radius: 20,
-                                        backgroundImage: MemoryImage(
-                                          base64Decode(profileImageBase64),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DetailScreen(
+                              postId: posts[index].id,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  profileImageBase64 != ''
+                                      ? CircleAvatar(
+                                          radius: 20,
+                                          backgroundImage: MemoryImage(
+                                            base64Decode(profileImageBase64),
+                                          ),
+                                        )
+                                      : const CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: Colors.grey,
+                                          child: Icon(Icons.person, size: 20),
                                         ),
-                                      )
-                                    : const CircleAvatar(
-                                        radius: 20,
-                                        backgroundColor: Colors.grey,
-                                        child: Icon(Icons.person, size: 20),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        username,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      username,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
+                                      Text(
+                                        email,
+                                        style: const TextStyle(color: Colors.grey),
                                       ),
+                                    ],
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    formatTime(createdAt),
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
                                     ),
+                                  ),
+                                ],
+                              ),
+                      
+                              const SizedBox(height: 8),
+                              Text(content),
+                              if (location.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.location_on_outlined,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
+                                    const SizedBox(width: 4),
                                     Text(
-                                      email,
+                                      location,
                                       style: const TextStyle(color: Colors.grey),
                                     ),
                                   ],
                                 ),
-                                const Spacer(),
-                                Text(
-                                  formatTime(createdAt),
-                                  style: const TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
+                              ],
+                              if (imageBase64List.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.memory(
+                                    base64Decode(imageBase64List[0]),
+                                    height: 200,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
                                   ),
                                 ),
                               ],
-                            ),
-
-                            const SizedBox(height: 8),
-                            Text(content),
-                            if (location.isNotEmpty) ...[
-                              const SizedBox(height: 4),
+                              const SizedBox(height: 8),
                               Row(
                                 children: [
+                                  Icon(
+                                    Icons.chat_bubble_outline,
+                                    size: 20,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 6),
                                   const Icon(
-                                    Icons.location_on_outlined,
-                                    size: 16,
-                                    color: Colors.grey,
+                                    Icons.favorite_border,
+                                    size: 20,
+                                    color: Colors.redAccent,
                                   ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    location,
-                                    style: const TextStyle(color: Colors.grey),
-                                  ),
+                                  const SizedBox(width: 2),
+                                  Text('$likeCount'),
                                 ],
                               ),
                             ],
-                            if (imageBase64List.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.memory(
-                                  base64Decode(imageBase64List[0]),
-                                  height: 200,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ],
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.chat_bubble_outline,
-                                  size: 20,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 6),
-                                const Icon(
-                                  Icons.favorite_border,
-                                  size: 20,
-                                  color: Colors.redAccent,
-                                ),
-                                const SizedBox(width: 2),
-                                Text('$likeCount'),
-                              ],
-                            ),
-                          ],
+                          ),
                         ),
                       ),
                     ),
@@ -285,11 +298,11 @@ class _HomeScreensState extends State<HomeScreens> {
           topRight: Radius.circular(24),
         ),
         child: BottomAppBar(
-          color: Color.fromARGB(255, 252, 234, 209),
+          color: Color(0xFFAC6F17),
           elevation: 8,
           shape: CircularNotchedRectangle(),
           notchMargin: 8,
-          child: SizedBox(height: 40),
+          child: SizedBox(height: 30),
         ),
       ),
     );
