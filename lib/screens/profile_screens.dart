@@ -23,8 +23,21 @@ class _ProfileScreensState extends State<ProfileScreens>
   bool _isLoading = true;
   late TabController _tabController;
   final ImagePicker _picker = ImagePicker();
-
   File? _profileImageFile;
+
+  String _formatTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final diff = now.difference(dateTime);
+    if (diff.inSeconds < 60) {
+      return '${diff.inSeconds}s ago';
+    } else if (diff.inMinutes < 60) {
+      return '${diff.inMinutes}m ago';
+    } else if (diff.inHours < 24) {
+      return '${diff.inHours}h ago';
+    } else {
+      return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+    }
+  }
 
   @override
   void initState() {
@@ -272,8 +285,157 @@ class _ProfileScreensState extends State<ProfileScreens>
   }
 
   Widget _buildPostList() {
-    return const Center(child: Text('Belum ada post.'));
+  final currentUser = FirebaseAuth.instance.currentUser!;
+  print("akuuu ${currentUser.uid}");
+
+  if (currentUser == null) {
+    return const Center(child: Text('User tidak ditemukan.'));
   }
+
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance
+        .collection('posts')
+        .where('userId', isEqualTo: currentUser.uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots(),
+    builder: (context, snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (!snapshot.hasData || snapshot.data == null) {
+        return const Center(child: Text('Tidak ada data.'));
+      }
+
+      final posts = snapshot.data!.docs;
+
+      if (posts.isEmpty) {
+        return const Center(child: Text('Belum ada post.'));
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(8),
+        itemCount: posts.length,
+        itemBuilder: (context, index) {
+          final data = posts[index].data() as Map<String, dynamic>;
+
+          final content = data['content'] ?? '';
+          final location = data['location'] ?? '';
+          final createdAt = (data['createdAt'] as Timestamp).toDate();
+          final imageBase64List = List<String>.from(data['images'] ?? []);
+          final likeCount = data['likes'] ?? 0;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: Card(
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        _profileImageBase64.isNotEmpty
+                            ? CircleAvatar(
+                                radius: 20,
+                                backgroundImage: MemoryImage(
+                                  base64Decode(_profileImageBase64),
+                                ),
+                              )
+                            : const CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Colors.grey,
+                                child: Icon(Icons.person, size: 20),
+                              ),
+                        const SizedBox(width: 10),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _userName,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              _email,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Text(
+                          _formatTime(createdAt),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(content),
+                    if (location.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.location_on_outlined,
+                            size: 16,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            location,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ],
+                      ),
+                    ],
+                    if (imageBase64List.isNotEmpty) ...[
+                      const SizedBox(height: 8),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.memory(
+                          base64Decode(imageBase64List[0]),
+                          height: 200,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.chat_bubble_outline,
+                          size: 20,
+                          color: Colors.grey[600],
+                        ),
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.favorite_border,
+                          size: 20,
+                          color: Colors.redAccent,
+                        ),
+                        const SizedBox(width: 2),
+                        Text('$likeCount'),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 
   Widget _buildLikesList() {
     return ListView(

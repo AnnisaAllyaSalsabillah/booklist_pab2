@@ -96,6 +96,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty && _base64Image == null) return;
 
+
     final user = FirebaseAuth.instance.currentUser!;
     final userDoc = await FirebaseFirestore.instance
         .collection('users')
@@ -105,7 +106,6 @@ class _AddPostScreenState extends State<AddPostScreen> {
     final userData = userDoc.data();
 
     final username = userData?['username'] ?? 'Unknown';
-    final handle = userData?['handle'] ?? '@unknown';
     final email = userData?['email'] ?? '';
     final profileImage = userData?['profileImage'] ?? '';
 
