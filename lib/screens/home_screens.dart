@@ -3,6 +3,7 @@ import 'package:booklist/screens/add_post_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/search_screens.dart';
 import 'package:booklist/screens/detail_screens.dart';
+import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -87,6 +88,16 @@ class _HomeScreensState extends State<HomeScreens> {
               leading: const Icon(Icons.dark_mode_outlined),
               title: const Text('Dark theme'),
               onTap: () {},
+            ),
+            ListTile(
+              leading: const Icon(Icons.logout_outlined),
+              title: const Text('LogOut'),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignInScreens()),
+                );
+              },
             ),
           ],
         ),

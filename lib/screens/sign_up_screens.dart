@@ -30,9 +30,10 @@ class SignUpScreensState extends State<SignUpScreens> {
     _tapRecognizer =
         TapGestureRecognizer()
           ..onTap = () {
-            Navigator.push(context, MaterialPageRoute(
-              builder: (context) => const SignInScreens(),
-            ));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SignInScreens()),
+            );
           };
   }
 
@@ -173,14 +174,14 @@ class SignUpScreensState extends State<SignUpScreens> {
                             borderRadius: BorderRadius.circular(10.0),
                           ),
                         ),
-                        child: const Text('Daftar',
-                        style: TextStyle(
-                          fontSize: 20,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold
+                        child: const Text(
+                          'Daftar',
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Colors.black,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        ),
-                        
                       ),
                   const SizedBox(height: 20),
                   RichText(
@@ -188,7 +189,7 @@ class SignUpScreensState extends State<SignUpScreens> {
                       text: 'Sudah punya Akun?',
                       style: const TextStyle(
                         fontSize: 16,
-                        color:Color.fromARGB(255, 205, 32, 32),
+                        color: Color.fromARGB(255, 205, 32, 32),
                       ),
                       children: <TextSpan>[
                         TextSpan(

@@ -61,8 +61,8 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
           opacity: _animation,
           child: Image.asset(
             'assets/booklist.png',
-            width: 350,
-            height: 250,
+            width: 400,
+            height: 300,
           ),  
         ),
       ),
