@@ -74,8 +74,12 @@ class _SearchScreensState extends State<SearchScreens> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: SafeArea(
@@ -83,14 +87,20 @@ class _SearchScreensState extends State<SearchScreens> {
             padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
             child: Row(
               children: [
-                const Icon(Icons.search, color: Colors.grey),
+                Icon(Icons.search, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     onChanged: _onSearchChanged,
-                    decoration: const InputDecoration(
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onBackground,
+                    ),
+                    decoration: InputDecoration(
                       hintText: 'Telusuri orang atau kata kunci',
+                      hintStyle: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.onBackground.withOpacity(0.5),
+                      ),
                       border: InputBorder.none,
                     ),
                   ),
@@ -103,9 +113,12 @@ class _SearchScreensState extends State<SearchScreens> {
                       _searchResults = [];
                     });
                   },
-                  child: const Text(
+                  child: Text(
                     'Batalkan',
-                    style: TextStyle(color: Colors.black),
+                    style: textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -115,11 +128,27 @@ class _SearchScreensState extends State<SearchScreens> {
       ),
       body:
           _isLoading
-              ? const Center(child: CircularProgressIndicator())
+              ? Center(
+                child: CircularProgressIndicator(color: colorScheme.primary),
+              )
               : searchQuery.isEmpty
-              ? const Center(child: Text('Masukkan kata kunci untuk mencari'))
+              ? Center(
+                child: Text(
+                  'Masukkan kata kunci untuk mencari',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onBackground.withOpacity(0.6),
+                  ),
+                ),
+              )
               : _searchResults.isEmpty
-              ? const Center(child: Text('Tidak ada hasil ditemukan'))
+              ? Center(
+                child: Text(
+                  'Tidak ada hasil ditemukan',
+                  style: textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onBackground.withOpacity(0.6),
+                  ),
+                ),
+              )
               : ListView.builder(
                 itemCount: _searchResults.length,
                 itemBuilder: (context, index) {
@@ -145,8 +174,13 @@ class _SearchScreensState extends State<SearchScreens> {
                       }
 
                       if (!snapshot.hasData || !snapshot.data!.exists) {
-                        return const ListTile(
-                          title: Text("Pengguna tidak ditemukan"),
+                        return ListTile(
+                          title: Text(
+                            "Pengguna tidak ditemukan",
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.error,
+                            ),
+                          ),
                         );
                       }
 
@@ -173,9 +207,10 @@ class _SearchScreensState extends State<SearchScreens> {
                                         base64Decode(profileImage),
                                       ),
                                     )
-                                    : const CircleAvatar(
+                                    : CircleAvatar(
                                       radius: 20,
-                                      backgroundColor: Colors.grey,
+                                      backgroundColor: colorScheme.primary
+                                          .withOpacity(0.3),
                                     ),
                                 const SizedBox(width: 10),
                                 Column(
@@ -183,16 +218,16 @@ class _SearchScreensState extends State<SearchScreens> {
                                   children: [
                                     Text(
                                       username,
-                                      style: const TextStyle(
+                                      style: textTheme.bodyLarge?.copyWith(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        color: colorScheme.onBackground,
                                       ),
                                     ),
                                     Text(
                                       email,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
+                                      style: textTheme.bodySmall?.copyWith(
+                                        color: colorScheme.onBackground
+                                            .withOpacity(0.6),
                                       ),
                                     ),
                                   ],
@@ -200,7 +235,12 @@ class _SearchScreensState extends State<SearchScreens> {
                               ],
                             ),
                             const SizedBox(height: 8),
-                            Text(content),
+                            Text(
+                              content,
+                              style: textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onBackground,
+                              ),
+                            ),
                             if (imageUrls.isNotEmpty) ...[
                               const SizedBox(height: 8),
                               ClipRRect(
@@ -215,16 +255,21 @@ class _SearchScreensState extends State<SearchScreens> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.favorite_border,
                                     size: 20,
-                                    color: Colors.redAccent,
+                                    color: colorScheme.secondary,
                                   ),
                                   const SizedBox(width: 4),
-                                  Text('$likeCount'),
+                                  Text(
+                                    '$likeCount',
+                                    style: textTheme.bodyMedium?.copyWith(
+                                      color: colorScheme.onBackground,
+                                    ),
+                                  ),
                                 ],
                               ),
-                              const Divider(),
+                              Divider(color: colorScheme.outline),
                             ],
                           ],
                         ),

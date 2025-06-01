@@ -11,7 +11,8 @@ class SplashScreens extends StatefulWidget {
   State<SplashScreens> createState() => _SplashScreensState();
 }
 
-class _SplashScreensState extends State<SplashScreens> with SingleTickerProviderStateMixin {
+class _SplashScreensState extends State<SplashScreens>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
 
@@ -27,15 +28,9 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
     _animation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: Curves.easeInOut,
-      ),
-    );
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
 
     _controller.forward();
-
     _navigateAfterSplash();
   }
 
@@ -44,17 +39,14 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
 
     final user = FirebaseAuth.instance.currentUser;
 
-    // Pastikan context masih aktif
     if (!mounted) return;
 
     if (user != null) {
-      // User sudah login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const HomeScreens()),
       );
     } else {
-      // User belum login
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const SignInScreens()),
@@ -70,16 +62,15 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: const Color.fromRGBO(255, 247, 213, 1),
+      backgroundColor: colorScheme.background, // Gunakan dari theme
       body: Center(
         child: FadeTransition(
           opacity: _animation,
-          child: Image.asset(
-            'assets/booklist.png',
-            width: 400,
-            height: 300,
-          ),
+          child: Image.asset('assets/booklist.png', width: 400, height: 300),
         ),
       ),
     );
