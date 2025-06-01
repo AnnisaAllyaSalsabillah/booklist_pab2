@@ -3,6 +3,7 @@ import 'package:booklist/screens/add_post_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/search_screens.dart';
 import 'package:booklist/screens/detail_screens.dart';
+import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -88,6 +89,16 @@ class _HomeScreensState extends State<HomeScreens> {
               title: const Text('Dark theme'),
               onTap: () {},
             ),
+            ListTile(
+              leading: const Icon(Icons.logout_outlined),
+              title: const Text('LogOut'),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => SignInScreens()),
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -110,10 +121,11 @@ class _HomeScreensState extends State<HomeScreens> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('posts')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream:
+            _firestore
+                .collection('posts')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -151,16 +163,18 @@ class _HomeScreensState extends State<HomeScreens> {
                   final email = userData['email'] ?? 'No Email';
 
                   return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     child: InkWell(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailScreen(
-                              postId: posts[index].id,
-                            ),
+                            builder:
+                                (context) =>
+                                    DetailScreen(postId: posts[index].id),
                           ),
                         );
                       },
@@ -178,19 +192,20 @@ class _HomeScreensState extends State<HomeScreens> {
                                 children: [
                                   profileImageBase64 != ''
                                       ? CircleAvatar(
-                                          radius: 20,
-                                          backgroundImage: MemoryImage(
-                                            base64Decode(profileImageBase64),
-                                          ),
-                                        )
-                                      : const CircleAvatar(
-                                          radius: 20,
-                                          backgroundColor: Colors.grey,
-                                          child: Icon(Icons.person, size: 20),
+                                        radius: 20,
+                                        backgroundImage: MemoryImage(
+                                          base64Decode(profileImageBase64),
                                         ),
+                                      )
+                                      : const CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: Colors.grey,
+                                        child: Icon(Icons.person, size: 20),
+                                      ),
                                   const SizedBox(width: 10),
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         username,
@@ -200,7 +215,9 @@ class _HomeScreensState extends State<HomeScreens> {
                                       ),
                                       Text(
                                         email,
-                                        style: const TextStyle(color: Colors.grey),
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -214,7 +231,7 @@ class _HomeScreensState extends State<HomeScreens> {
                                   ),
                                 ],
                               ),
-                      
+
                               const SizedBox(height: 8),
                               Text(content),
                               if (location.isNotEmpty) ...[
@@ -229,7 +246,9 @@ class _HomeScreensState extends State<HomeScreens> {
                                     const SizedBox(width: 4),
                                     Text(
                                       location,
-                                      style: const TextStyle(color: Colors.grey),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
