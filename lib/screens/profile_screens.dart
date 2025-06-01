@@ -8,6 +8,7 @@ import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:booklist/screens/home_screens.dart';
+import 'package:booklist/theme/theme.dart';
 
 class ProfileScreens extends StatefulWidget {
   const ProfileScreens({super.key});
@@ -298,9 +299,9 @@ class _ProfileScreensState extends State<ProfileScreens>
                     const SizedBox(height: 8),
                     TabBar(
                       controller: _tabController,
-                      labelColor: Colors.orange,
-                      unselectedLabelColor: Colors.black,
-                      indicatorColor: Colors.orange,
+                      labelColor: Theme.of(context).colorScheme.primary,
+                      unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+                      indicatorColor: Theme.of(context).colorScheme.primary,
                       tabs: const [Tab(text: 'Post'), Tab(text: 'Likes')],
                     ),
                     Expanded(
@@ -403,8 +404,10 @@ class _ProfileScreensState extends State<ProfileScreens>
                                 ),
                                 Text(
                                   _email,
-                                  style: const TextStyle(color: Colors.grey),
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurface,
                                 ),
+                                )
                               ],
                             ),
                             const Spacer(),
@@ -525,9 +528,9 @@ class _ProfileScreensState extends State<ProfileScreens>
                                   base64Decode(_profileImageBase64),
                                 ),
                               )
-                              : const CircleAvatar(
+                              : CircleAvatar(
                                 radius: 20,
-                                backgroundColor: Colors.grey,
+                                backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
                                 child: Icon(Icons.person),
                               ),
                           const SizedBox(width: 10),
