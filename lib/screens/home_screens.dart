@@ -110,10 +110,11 @@ class _HomeScreensState extends State<HomeScreens> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('posts')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream:
+            _firestore
+                .collection('posts')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -151,16 +152,18 @@ class _HomeScreensState extends State<HomeScreens> {
                   final email = userData['email'] ?? 'No Email';
 
                   return Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     child: InkWell(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailScreen(
-                              postId: posts[index].id,
-                            ),
+                            builder:
+                                (context) =>
+                                    DetailScreen(postId: posts[index].id),
                           ),
                         );
                       },
@@ -178,19 +181,20 @@ class _HomeScreensState extends State<HomeScreens> {
                                 children: [
                                   profileImageBase64 != ''
                                       ? CircleAvatar(
-                                          radius: 20,
-                                          backgroundImage: MemoryImage(
-                                            base64Decode(profileImageBase64),
-                                          ),
-                                        )
-                                      : const CircleAvatar(
-                                          radius: 20,
-                                          backgroundColor: Colors.grey,
-                                          child: Icon(Icons.person, size: 20),
+                                        radius: 20,
+                                        backgroundImage: MemoryImage(
+                                          base64Decode(profileImageBase64),
                                         ),
+                                      )
+                                      : const CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: Colors.grey,
+                                        child: Icon(Icons.person, size: 20),
+                                      ),
                                   const SizedBox(width: 10),
                                   Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         username,
@@ -200,7 +204,9 @@ class _HomeScreensState extends State<HomeScreens> {
                                       ),
                                       Text(
                                         email,
-                                        style: const TextStyle(color: Colors.grey),
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -214,7 +220,7 @@ class _HomeScreensState extends State<HomeScreens> {
                                   ),
                                 ],
                               ),
-                      
+
                               const SizedBox(height: 8),
                               Text(content),
                               if (location.isNotEmpty) ...[
@@ -229,7 +235,9 @@ class _HomeScreensState extends State<HomeScreens> {
                                     const SizedBox(width: 4),
                                     Text(
                                       location,
-                                      style: const TextStyle(color: Colors.grey),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -249,19 +257,67 @@ class _HomeScreensState extends State<HomeScreens> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 20,
-                                    color: Colors.grey[600],
+                                  FutureBuilder<DocumentSnapshot>(
+                                    future:
+                                        _firestore
+                                            .collection('posts')
+                                            .doc(posts[index].id)
+                                            .collection('likes')
+                                            .doc(currentUser!.uid)
+                                            .get(),
+                                    builder: (context, likeSnapshot) {
+                                      final alreadyLiked =
+                                          likeSnapshot.data?.exists ?? false;
+                                      return Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              alreadyLiked
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: Colors.redAccent,
+                                              size: 20,
+                                            ),
+                                            onPressed: () async {
+                                              final postRef = _firestore
+                                                  .collection('posts')
+                                                  .doc(posts[index].id);
+                                              final likeRef = postRef
+                                                  .collection('likes')
+                                                  .doc(currentUser!.uid);
+
+                                              final likeDoc =
+                                                  await likeRef.get();
+                                              if (likeDoc.exists) {
+                                                // UNLIKE: hapus like dan kurangi jumlah likes
+                                                await likeRef.delete();
+                                                await postRef.update({
+                                                  'likes': FieldValue.increment(
+                                                    -1,
+                                                  ),
+                                                });
+                                              } else {
+                                                // LIKE: tambah like dan tambah jumlah likes
+                                                await likeRef.set({
+                                                  'likedAt':
+                                                      FieldValue.serverTimestamp(),
+                                                });
+                                                await postRef.update({
+                                                  'likes': FieldValue.increment(
+                                                    1,
+                                                  ),
+                                                });
+                                              }
+
+                                              setState(() {}); // Refresh UI
+                                            },
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text('$likeCount'),
+                                        ],
+                                      );
+                                    },
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.favorite_border,
-                                    size: 20,
-                                    color: Colors.redAccent,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text('$likeCount'),
                                 ],
                               ),
                             ],
