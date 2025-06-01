@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:booklist/screens/detail_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -328,108 +329,121 @@ class _ProfileScreensState extends State<ProfileScreens>
             final imageBase64List = List<String>.from(data['images'] ?? []);
             final likeCount = data['likes'] ?? 0;
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              child: Card(
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          _profileImageBase64.isNotEmpty
-                              ? CircleAvatar(
-                                radius: 20,
-                                backgroundImage: MemoryImage(
-                                  base64Decode(_profileImageBase64),
+            return InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailScreen(
+                      postId: posts[index].id,
+                      
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            _profileImageBase64.isNotEmpty
+                                ? CircleAvatar(
+                                  radius: 20,
+                                  backgroundImage: MemoryImage(
+                                    base64Decode(_profileImageBase64),
+                                  ),
+                                )
+                                : const CircleAvatar(
+                                  radius: 20,
+                                  backgroundColor: Colors.grey,
+                                  child: Icon(Icons.person, size: 20),
                                 ),
-                              )
-                              : const CircleAvatar(
-                                radius: 20,
-                                backgroundColor: Colors.grey,
-                                child: Icon(Icons.person, size: 20),
+                            const SizedBox(width: 10),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _userName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  _email,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Text(
+                              _formatTime(createdAt),
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 12,
                               ),
-                          const SizedBox(width: 10),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(content),
+                        if (location.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
                             children: [
-                              Text(
-                                _userName,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              const Icon(
+                                Icons.location_on_outlined,
+                                size: 16,
+                                color: Colors.grey,
                               ),
+                              const SizedBox(width: 4),
                               Text(
-                                _email,
+                                location,
                                 style: const TextStyle(color: Colors.grey),
                               ),
                             ],
                           ),
-                          const Spacer(),
-                          Text(
-                            _formatTime(createdAt),
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 12,
+                        ],
+                        if (imageBase64List.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(
+                              base64Decode(imageBase64List[0]),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
                             ),
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(content),
-                      if (location.isNotEmpty) ...[
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
+                            Icon(
+                              Icons.chat_bubble_outline,
+                              size: 20,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 6),
                             const Icon(
-                              Icons.location_on_outlined,
-                              size: 16,
-                              color: Colors.grey,
+                              Icons.favorite_border,
+                              size: 20,
+                              color: Colors.redAccent,
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              location,
-                              style: const TextStyle(color: Colors.grey),
-                            ),
+                            const SizedBox(width: 2),
+                            Text('$likeCount'),
                           ],
                         ),
                       ],
-                      if (imageBase64List.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.memory(
-                            base64Decode(imageBase64List[0]),
-                            height: 200,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ],
-                      const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.chat_bubble_outline,
-                            size: 20,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 6),
-                          const Icon(
-                            Icons.favorite_border,
-                            size: 20,
-                            color: Colors.redAccent,
-                          ),
-                          const SizedBox(width: 2),
-                          Text('$likeCount'),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),

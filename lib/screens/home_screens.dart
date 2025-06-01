@@ -270,19 +270,67 @@ class _HomeScreensState extends State<HomeScreens> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  Icon(
-                                    Icons.chat_bubble_outline,
-                                    size: 20,
-                                    color: Colors.grey[600],
+                                  FutureBuilder<DocumentSnapshot>(
+                                    future:
+                                        _firestore
+                                            .collection('posts')
+                                            .doc(posts[index].id)
+                                            .collection('likes')
+                                            .doc(currentUser!.uid)
+                                            .get(),
+                                    builder: (context, likeSnapshot) {
+                                      final alreadyLiked =
+                                          likeSnapshot.data?.exists ?? false;
+                                      return Row(
+                                        children: [
+                                          IconButton(
+                                            icon: Icon(
+                                              alreadyLiked
+                                                  ? Icons.favorite
+                                                  : Icons.favorite_border,
+                                              color: Colors.redAccent,
+                                              size: 20,
+                                            ),
+                                            onPressed: () async {
+                                              final postRef = _firestore
+                                                  .collection('posts')
+                                                  .doc(posts[index].id);
+                                              final likeRef = postRef
+                                                  .collection('likes')
+                                                  .doc(currentUser!.uid);
+
+                                              final likeDoc =
+                                                  await likeRef.get();
+                                              if (likeDoc.exists) {
+                                                // UNLIKE: hapus like dan kurangi jumlah likes
+                                                await likeRef.delete();
+                                                await postRef.update({
+                                                  'likes': FieldValue.increment(
+                                                    -1,
+                                                  ),
+                                                });
+                                              } else {
+                                                // LIKE: tambah like dan tambah jumlah likes
+                                                await likeRef.set({
+                                                  'likedAt':
+                                                      FieldValue.serverTimestamp(),
+                                                });
+                                                await postRef.update({
+                                                  'likes': FieldValue.increment(
+                                                    1,
+                                                  ),
+                                                });
+                                              }
+
+                                              setState(() {}); // Refresh UI
+                                            },
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text('$likeCount'),
+                                        ],
+                                      );
+                                    },
                                   ),
-                                  const SizedBox(width: 6),
-                                  const Icon(
-                                    Icons.favorite_border,
-                                    size: 20,
-                                    color: Colors.redAccent,
-                                  ),
-                                  const SizedBox(width: 2),
-                                  Text('$likeCount'),
                                 ],
                               ),
                             ],
