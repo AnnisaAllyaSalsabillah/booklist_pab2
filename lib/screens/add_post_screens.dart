@@ -32,10 +32,17 @@ class _AddPostScreenState extends State<AddPostScreen> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
-    final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+    final doc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
     if (doc.exists) {
       final data = doc.data();
-      if (data != null && data['profileImage'] != null && data['profileImage'] is String && data['profileImage'].isNotEmpty) {
+      if (data != null &&
+          data['profileImage'] != null &&
+          data['profileImage'] is String &&
+          data['profileImage'].isNotEmpty) {
         setState(() {
           _profileImageBase64 = data['profileImage'];
         });
@@ -96,12 +103,12 @@ class _AddPostScreenState extends State<AddPostScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty && _base64Image == null) return;
 
-
     final user = FirebaseAuth.instance.currentUser!;
-    final userDoc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(user.uid)
-        .get();
+    final userDoc =
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
 
     final userData = userDoc.data();
 
@@ -127,8 +134,11 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: colorScheme.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(50),
         child: SafeArea(
@@ -138,7 +148,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.close),
+                  icon: Icon(Icons.close, color: colorScheme.onBackground),
                   onPressed: () => Navigator.pop(context),
                 ),
                 TextButton(
@@ -163,16 +173,19 @@ class _AddPostScreenState extends State<AddPostScreen> {
       body: Column(
         children: [
           ListTile(
-            leading: _profileImageBase64 != null && _profileImageBase64!.isNotEmpty
-                ? CircleAvatar(
-                    radius: 20,
-                    backgroundImage: MemoryImage(base64Decode(_profileImageBase64!)),
-                  )
-                : const CircleAvatar(
-                    backgroundColor: Colors.grey,
-                    radius: 20,
-                    child: Icon(Icons.person),
-                  ),
+            leading:
+                _profileImageBase64 != null && _profileImageBase64!.isNotEmpty
+                    ? CircleAvatar(
+                      radius: 20,
+                      backgroundImage: MemoryImage(
+                        base64Decode(_profileImageBase64!),
+                      ),
+                    )
+                    : const CircleAvatar(
+                      backgroundColor: Colors.grey,
+                      radius: 20,
+                      child: Icon(Icons.person),
+                    ),
             title: TextField(
               controller: _controller,
               decoration: const InputDecoration(

@@ -28,6 +28,7 @@ dependencies:
   flutter_native_splash: ^2.4.6
   flutter_localizations:
     sdk: flutter
+  provider: ^6.1.5
 
 dev_dependencies:
   flutter_test:

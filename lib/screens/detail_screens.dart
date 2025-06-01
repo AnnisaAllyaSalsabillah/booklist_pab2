@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:booklist/theme/theme.dart';
 
 class DetailScreen extends StatefulWidget {
   final String postId;
@@ -165,6 +166,9 @@ class _DetailScreenState extends State<DetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -249,7 +253,10 @@ class _DetailScreenState extends State<DetailScreen> {
             TextField(
               controller: _commentController,
               decoration: InputDecoration(
-                hintText: 'Write a comment ...',
+                hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                  color: colorScheme.onBackground.withOpacity(0.5),
+                ),
+
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.send),
                   onPressed: addComment,

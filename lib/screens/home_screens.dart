@@ -4,9 +4,11 @@ import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/search_screens.dart';
 import 'package:booklist/screens/detail_screens.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
+import 'package:booklist/theme/theme_notifier.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreens extends StatefulWidget {
   const HomeScreens({Key? key}) : super(key: key);
@@ -44,6 +46,8 @@ class _HomeScreensState extends State<HomeScreens> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
@@ -57,7 +61,7 @@ class _HomeScreensState extends State<HomeScreens> {
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
-                border: Border.all(color: Colors.grey.shade300, width: 2),
+                border: Border.all(color: theme.dividerColor, width: 2),
               ),
               padding: const EdgeInsets.all(16),
               child: const Column(
@@ -87,7 +91,16 @@ class _HomeScreensState extends State<HomeScreens> {
             ListTile(
               leading: const Icon(Icons.dark_mode_outlined),
               title: const Text('Dark theme'),
-              onTap: () {},
+              trailing: Consumer<ThemeNotifier>(
+                builder: (context, themeNotifier, child) {
+                  return Switch(
+                    value: themeNotifier.isDarkMode,
+                    onChanged: (value) {
+                      themeNotifier.toggleTheme();
+                    },
+                  );
+                },
+              ),
             ),
             ListTile(
               leading: const Icon(Icons.logout_outlined),
@@ -106,7 +119,7 @@ class _HomeScreensState extends State<HomeScreens> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFAC6F17),
+        backgroundColor: theme.colorScheme.primary,
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -124,10 +137,11 @@ class _HomeScreensState extends State<HomeScreens> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _firestore
-            .collection('posts')
-            .orderBy('createdAt', descending: true)
-            .snapshots(),
+        stream:
+            _firestore
+                .collection('posts')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());
@@ -158,7 +172,6 @@ class _HomeScreensState extends State<HomeScreens> {
 
                   final userData =
                       userSnapshot.data!.data() as Map<String, dynamic>? ?? {};
-
                   final profileImageBase64 = userData['profileImage'] ?? '';
                   final username = userData['userName'] ?? 'Unknown';
                   final email = userData['email'] ?? 'No Email';
@@ -173,13 +186,15 @@ class _HomeScreensState extends State<HomeScreens> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                DetailScreen(postId: posts[index].id),
+                            builder:
+                                (context) =>
+                                    DetailScreen(postId: posts[index].id),
                           ),
                         );
                       },
                       child: Card(
-                        elevation: 0,
+                        elevation: 2,
+                        color: theme.cardColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -190,18 +205,18 @@ class _HomeScreensState extends State<HomeScreens> {
                             children: [
                               Row(
                                 children: [
-                                  profileImageBase64 != ''
+                                  profileImageBase64.isNotEmpty
                                       ? CircleAvatar(
-                                          radius: 20,
-                                          backgroundImage: MemoryImage(
-                                            base64Decode(profileImageBase64),
-                                          ),
-                                        )
-                                      : const CircleAvatar(
-                                          radius: 20,
-                                          backgroundColor: Colors.grey,
-                                          child: Icon(Icons.person, size: 20),
+                                        radius: 20,
+                                        backgroundImage: MemoryImage(
+                                          base64Decode(profileImageBase64),
                                         ),
+                                      )
+                                      : const CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: Colors.grey,
+                                        child: Icon(Icons.person, size: 20),
+                                      ),
                                   const SizedBox(width: 10),
                                   Column(
                                     crossAxisAlignment:
@@ -209,45 +224,43 @@ class _HomeScreensState extends State<HomeScreens> {
                                     children: [
                                       Text(
                                         username,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: theme.textTheme.bodyLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                       Text(
                                         email,
-                                        style: const TextStyle(
-                                          color: Colors.grey,
-                                        ),
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(color: theme.hintColor),
                                       ),
                                     ],
                                   ),
                                   const Spacer(),
                                   Text(
                                     formatTime(createdAt),
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 12,
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.hintColor,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text(content),
+                              Text(content, style: theme.textTheme.bodyMedium),
                               if (location.isNotEmpty) ...[
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.location_on_outlined,
                                       size: 16,
-                                      color: Colors.grey,
+                                      color: theme.hintColor,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       location,
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                      ),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(color: theme.hintColor),
                                     ),
                                   ],
                                 ),
@@ -265,7 +278,6 @@ class _HomeScreensState extends State<HomeScreens> {
                                 ),
                               ],
                               const SizedBox(height: 8),
-                              // Like button & counter dihapus
                             ],
                           ),
                         ),
@@ -287,24 +299,24 @@ class _HomeScreensState extends State<HomeScreens> {
               MaterialPageRoute(builder: (context) => const AddPostScreen()),
             );
           },
-          backgroundColor: Colors.amber[300],
+          backgroundColor: theme.colorScheme.secondary,
           foregroundColor: Colors.white,
           shape: const CircleBorder(),
           child: const Icon(Icons.add, size: 32),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: const ClipRRect(
-        borderRadius: BorderRadius.only(
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
         ),
         child: BottomAppBar(
-          color: Color(0xFFAC6F17),
+          color: theme.colorScheme.primary,
           elevation: 8,
-          shape: CircularNotchedRectangle(),
+          shape: const CircularNotchedRectangle(),
           notchMargin: 8,
-          child: SizedBox(height: 30),
+          child: const SizedBox(height: 30),
         ),
       ),
     );

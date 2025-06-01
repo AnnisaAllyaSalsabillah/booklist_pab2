@@ -5,12 +5,15 @@ import 'package:booklist/screens/home_screens.dart';
 import 'package:booklist/screens/profile_screens.dart';
 import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:booklist/screens/splash_screens.dart';
+import 'package:booklist/theme/theme_notifier.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:provider/provider.dart'; // Tambahkan ini
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:booklist/theme/theme.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -126,7 +129,12 @@ void main() async {
   );
   await flutterLocalNotificationsPlugin.initialize(settings);
 
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => ThemeNotifier(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
@@ -168,21 +176,30 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'BookList',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
-        useMaterial3: true,
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const SplashScreens(),
-        '/signin': (context) => const SignInScreens(),
-        '/home': (context) => const HomeScreens(),
-        '/profile': (context) => const ProfileScreens(),
-        '/addpost': (context) => const AddPostScreen(),
-        // Tambahkan lagi jika punya layar lain seperti SignUpScreens, EditProfile, dll.
+    return Consumer<ThemeNotifier>(
+      builder: (context, themeNotifier, child) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'BookList',
+          theme: AppTheme.lightTheme,
+          darkTheme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: Colors.amber,
+              brightness: Brightness.dark,
+            ),
+            useMaterial3: true,
+          ),
+          themeMode:
+              themeNotifier.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          initialRoute: '/',
+          routes: {
+            '/': (context) => const SplashScreens(),
+            '/signin': (context) => const SignInScreens(),
+            '/home': (context) => const HomeScreens(),
+            '/profile': (context) => const ProfileScreens(),
+            '/addpost': (context) => const AddPostScreen(),
+          },
+        );
       },
     );
   }
