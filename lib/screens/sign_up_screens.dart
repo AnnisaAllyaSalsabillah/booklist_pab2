@@ -27,14 +27,13 @@ class SignUpScreensState extends State<SignUpScreens> {
   @override
   void initState() {
     super.initState();
-    _tapRecognizer =
-        TapGestureRecognizer()
-          ..onTap = () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const SignInScreens()),
-            );
-          };
+    _tapRecognizer = TapGestureRecognizer()
+      ..onTap = () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SignInScreens()),
+        );
+      };
   }
 
   @override
@@ -49,8 +48,18 @@ class SignUpScreensState extends State<SignUpScreens> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
+      appBar: AppBar(
+        title: Text('Sign Up', style: textTheme.titleLarge),
+        backgroundColor: colorScheme.background,
+        foregroundColor: colorScheme.onBackground,
+        elevation: 0,
+      ),
+      backgroundColor: colorScheme.background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -58,8 +67,6 @@ class SignUpScreensState extends State<SignUpScreens> {
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const CircleAvatar(
                     radius: 50,
@@ -75,9 +82,7 @@ class SignUpScreensState extends State<SignUpScreens> {
                       prefixIcon: Icon(Icons.email),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty ||
-                          !_isValidEmail(value)) {
+                      if (value == null || value.isEmpty || !_isValidEmail(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -108,9 +113,7 @@ class SignUpScreensState extends State<SignUpScreens> {
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
@@ -139,14 +142,11 @@ class SignUpScreensState extends State<SignUpScreens> {
                       prefixIcon: const Icon(Icons.lock_outline),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isConfirmPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                          _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
                         ),
                         onPressed: () {
                           setState(() {
-                            _isConfirmPasswordVisible =
-                                !_isConfirmPasswordVisible;
+                            _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
                           });
                         },
                       ),
@@ -166,39 +166,36 @@ class SignUpScreensState extends State<SignUpScreens> {
                   _isLoading
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
-                        onPressed: _signUp,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF4C869),
-                          minimumSize: const Size(120, 45),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+                          onPressed: _signUp,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: colorScheme.primary,
+                            minimumSize: const Size(120, 45),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                          child: Text(
+                            'Daftar',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'Daftar',
-                          style: TextStyle(
-                            fontSize: 20,
-                            color: Colors.black,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                   const SizedBox(height: 20),
                   RichText(
                     text: TextSpan(
                       text: 'Sudah punya Akun?',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Color.fromARGB(255, 205, 32, 32),
+                      style: textTheme.bodyMedium?.copyWith(
+                        color: colorScheme.error,
                       ),
                       children: <TextSpan>[
                         TextSpan(
                           text: ' Masuk Disini',
-                          style: const TextStyle(
-                            color: Colors.blue,
+                          style: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.bold,
                             decoration: TextDecoration.underline,
-                            fontSize: 16,
                           ),
                           recognizer: _tapRecognizer,
                         ),
@@ -228,13 +225,13 @@ class SignUpScreensState extends State<SignUpScreens> {
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-            'userName': _userNameController.text.trim(),
-            'email': email,
-            'createdAt': Timestamp.now(),
-          });
+        'userName': _userNameController.text.trim(),
+        'email': email,
+        'createdAt': Timestamp.now(),
+      });
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => HomeScreens()),
+        MaterialPageRoute(builder: (context) => const HomeScreens()),
         (route) => false,
       );
     } on FirebaseAuthException catch (error) {
@@ -247,9 +244,7 @@ class SignUpScreensState extends State<SignUpScreens> {
   }
 
   void _showErrorMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _isValidEmail(String email) {

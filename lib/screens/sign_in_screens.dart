@@ -3,6 +3,8 @@ import 'package:booklist/screens/sign_up_screens.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:booklist/theme/theme.dart';
+
 
 class SignInScreens extends StatefulWidget {
   const SignInScreens({super.key});
@@ -20,14 +22,24 @@ class SignInScreensState extends State<SignInScreens> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final textTheme = theme.textTheme;
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign In')),
+      backgroundColor: theme.colorScheme.background,
+      appBar: AppBar(
+        title: Text('Sign In', style: textTheme.titleLarge),
+        backgroundColor: colorScheme.primary,
+        foregroundColor: colorScheme.onPrimary,
+      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
             child: Form(
               key: _formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -40,10 +52,11 @@ class SignInScreensState extends State<SignInScreens> {
                     controller: _emailController,
                     textCapitalization: TextCapitalization.none,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Email',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
+                      labelStyle: TextStyle(color: colorScheme.primary),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.person, color: colorScheme.primary),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty || !_isValidEmail(value)) {
@@ -58,11 +71,13 @@ class SignInScreensState extends State<SignInScreens> {
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
+                      labelStyle: TextStyle(color: colorScheme.primary),
                       border: const OutlineInputBorder(),
-                      prefixIcon: const Icon(Icons.lock),
+                      prefixIcon: Icon(Icons.lock, color: colorScheme.primary),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                          color: colorScheme.primary,
                         ),
                         onPressed: () {
                           setState(() => _isPasswordVisible = !_isPasswordVisible);
@@ -84,19 +99,18 @@ class SignInScreensState extends State<SignInScreens> {
                           child: CircularProgressIndicator(),
                         )
                       : ElevatedButton(
-                          onPressed: _signIn,
+                          onPressed: _isLoading ? null : _signIn,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFF4C869),
+                            backgroundColor: colorScheme.primary,
                             minimumSize: const Size(120, 45),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10.0),
                             ),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Login',
-                            style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 20.0,
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onPrimary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -104,16 +118,16 @@ class SignInScreensState extends State<SignInScreens> {
                   const SizedBox(height: 16.0),
                   RichText(
                     text: TextSpan(
-                      style: const TextStyle(
+                      style: textTheme.bodyMedium?.copyWith(
                         fontSize: 16.0,
-                        color: Color.fromARGB(255, 205, 32, 32),
+                        color: colorScheme.error,
                       ),
                       children: [
                         const TextSpan(text: "Belum punya akun? "),
                         TextSpan(
                           text: "Daftar",
-                          style: const TextStyle(
-                            color: Colors.blue,
+                          style: TextStyle(
+                            color: colorScheme.primary,
                             fontWeight: FontWeight.bold,
                           ),
                           recognizer: TapGestureRecognizer()
@@ -139,7 +153,7 @@ class SignInScreensState extends State<SignInScreens> {
   void _signIn() async {
     if (!_formKey.currentState!.validate()) return;
 
-    FocusScope.of(context).unfocus(); // Tutup keyboard
+    FocusScope.of(context).unfocus();
 
     final email = _emailController.text.trim();
     final password = _passwordController.text;
@@ -155,12 +169,6 @@ class SignInScreensState extends State<SignInScreens> {
       final user = credential.user;
 
       if (user != null) {
-        // Jika kamu butuh validasi email:
-        // if (!user.emailVerified) {
-        //   _showSnackBar('Email belum diverifikasi');
-        //   return;
-        // }
-
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const HomeScreens()),
         );
@@ -175,7 +183,13 @@ class SignInScreensState extends State<SignInScreens> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    final colorScheme = Theme.of(context).colorScheme;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: colorScheme.error,
+      ),
+    );
   }
 
   bool _isValidEmail(String email) {
