@@ -229,7 +229,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
@@ -245,7 +245,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          const SizedBox(width: 80),
+                          // SizedBox dihapus supaya tidak mendorong ke kanan
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,6 +268,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 8),
                     TabBar(
                       controller: _tabController,
@@ -280,7 +281,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                       child: TabBarView(
                         controller: _tabController,
                         children: [_buildPostList(), _buildLikesList()],
-                      ), 
+                      ),
                     ),
                   ],
                 ),
@@ -334,10 +335,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DetailScreen(
-                      postId: posts[index].id,
-                      
-                    ),
+                    builder: (context) => DetailScreen(postId: posts[index].id),
                   ),
                 );
               },
