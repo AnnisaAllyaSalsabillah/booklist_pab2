@@ -187,6 +187,32 @@ class _ProfileScreensState extends State<ProfileScreens>
     );
   }
 
+  void _toggleLike(
+    String postId,
+    int currentLikes,
+    List<dynamic>? likedByList,
+  ) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(postId);
+    final likedBy = likedByList ?? [];
+
+    if (likedBy.contains(userId)) {
+      // Unlike
+      await postRef.update({
+        'likes': currentLikes - 1,
+        'likedBy': FieldValue.arrayRemove([userId]),
+      });
+    } else {
+      // Like
+      await postRef.update({
+        'likes': currentLikes + 1,
+        'likedBy': FieldValue.arrayUnion([userId]),
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final imageWidget =
@@ -229,7 +255,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: Colors.grey[300],
-                                  borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(12),
                               ),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
@@ -280,7 +306,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                       child: TabBarView(
                         controller: _tabController,
                         children: [_buildPostList(), _buildLikesList()],
-                      ), 
+                      ),
                     ),
                   ],
                 ),
@@ -334,10 +360,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DetailScreen(
-                      postId: posts[index].id,
-                      
-                    ),
+                    builder: (context) => DetailScreen(postId: posts[index].id),
                   ),
                 );
               },
@@ -425,23 +448,6 @@ class _ProfileScreensState extends State<ProfileScreens>
                           ),
                         ],
                         const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.chat_bubble_outline,
-                              size: 20,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.favorite_border,
-                              size: 20,
-                              color: Colors.redAccent,
-                            ),
-                            const SizedBox(width: 2),
-                            Text('$likeCount'),
-                          ],
-                        ),
                       ],
                     ),
                   ),
@@ -455,39 +461,139 @@ class _ProfileScreensState extends State<ProfileScreens>
   }
 
   Widget _buildLikesList() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: const [
-        Row(
-          children: [
-            CircleAvatar(radius: 20, backgroundColor: Colors.grey),
-            SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Nadh', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('@bomgyune', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          ],
-        ),
-        SizedBox(height: 10),
-        Text(
-          'It has been a really a while since I picked up Miss Daws book. Nine Month Contract is fun read. Really fun read. I like Triśta very much. I think Triśta is the alter ego of Miss Daws herself',
-        ),
-        SizedBox(height: 10),
-        Row(
-          children: [
-            Icon(Icons.mode_comment_outlined, size: 20),
-            SizedBox(width: 16),
-            Icon(Icons.favorite, color: Colors.red),
-            SizedBox(width: 4),
-            Text('5k', style: TextStyle(color: Colors.black)),
-          ],
-        ),
-        SizedBox(height: 10),
-        Text('Show more', style: TextStyle(color: Colors.orange)),
-      ],
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      return const Center(child: Text('User tidak ditemukan.'));
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream:
+          FirebaseFirestore.instance
+              .collection('posts')
+              .where('likedBy', arrayContains: currentUser.uid)
+              .orderBy('createdAt', descending: true)
+              .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Center(child: Text('Belum ada postingan yang disukai.'));
+        }
+
+        final likedPosts = snapshot.data!.docs;
+
+        return ListView.builder(
+          itemCount: likedPosts.length,
+          itemBuilder: (context, index) {
+            final post = likedPosts[index];
+            final data = post.data() as Map<String, dynamic>;
+
+            final content = data['content'] ?? '';
+            final location = data['location'] ?? '';
+            final createdAt = (data['createdAt'] as Timestamp).toDate();
+            final imageBase64List = List<String>.from(data['images'] ?? []);
+            final likeCount = data['likes'] ?? 0;
+
+            return InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DetailScreen(postId: post.id),
+                  ),
+                );
+              },
+              child: Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          _profileImageBase64.isNotEmpty
+                              ? CircleAvatar(
+                                radius: 20,
+                                backgroundImage: MemoryImage(
+                                  base64Decode(_profileImageBase64),
+                                ),
+                              )
+                              : const CircleAvatar(
+                                radius: 20,
+                                backgroundColor: Colors.grey,
+                                child: Icon(Icons.person),
+                              ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _userName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                _email,
+                                style: const TextStyle(color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                          const Spacer(),
+                          Text(
+                            _formatTime(createdAt),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(content),
+                      if (location.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              location,
+                              style: const TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      if (imageBase64List.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(
+                              base64Decode(imageBase64List[0]),
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      const SizedBox(height: 8),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }
