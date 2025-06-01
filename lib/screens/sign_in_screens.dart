@@ -115,9 +115,9 @@ class SignInScreensState extends State<SignInScreens> {
                         color: Color.fromARGB(255, 205, 32, 32),
                       ),
                       children: [
-                        const TextSpan(text: "Don't have an account? "),
+                        const TextSpan(text: "Belum punya akun? "),
                         TextSpan(
-                          text: "Sign Up",
+                          text: "Daftar",
                           style: const TextStyle(
                             color: Colors.blue,
                             fontWeight: FontWeight.bold,
