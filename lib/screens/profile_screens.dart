@@ -271,7 +271,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          const SizedBox(width: 80),
+                          // SizedBox dihapus supaya tidak mendorong ke kanan
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,6 +294,7 @@ class _ProfileScreensState extends State<ProfileScreens>
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 8),
                     TabBar(
                       controller: _tabController,
