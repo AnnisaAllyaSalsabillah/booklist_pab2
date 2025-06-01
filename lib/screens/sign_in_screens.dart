@@ -30,7 +30,6 @@ class SignInScreensState extends State<SignInScreens> {
               key: _formKey,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const CircleAvatar(
                     radius: 50,
@@ -39,16 +38,15 @@ class SignInScreensState extends State<SignInScreens> {
                   const SizedBox(height: 40),
                   TextFormField(
                     controller: _emailController,
-                    textCapitalization: TextCapitalization.words,
+                    textCapitalization: TextCapitalization.none,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: const InputDecoration(
                       labelText: 'Email',
                       border: OutlineInputBorder(),
                       prefixIcon: Icon(Icons.person),
                     ),
                     validator: (value) {
-                      if (value == null ||
-                          value.isEmpty ||
-                          !_isValidEmail(value)) {
+                      if (value == null || value.isEmpty || !_isValidEmail(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -64,14 +62,10 @@ class SignInScreensState extends State<SignInScreens> {
                       prefixIcon: const Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
                         ),
                         onPressed: () {
-                          setState(() {
-                            _isPasswordVisible = !_isPasswordVisible;
-                          });
+                          setState(() => _isPasswordVisible = !_isPasswordVisible);
                         },
                       ),
                     ),
@@ -85,28 +79,28 @@ class SignInScreensState extends State<SignInScreens> {
                   const SizedBox(height: 16),
                   _isLoading
                       ? const SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: CircularProgressIndicator(),
-                      )
+                          width: 48,
+                          height: 48,
+                          child: CircularProgressIndicator(),
+                        )
                       : ElevatedButton(
-                        onPressed: _signIn,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFF4C869),
-                          minimumSize: const Size(120, 45),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.0),
+                          onPressed: _signIn,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFF4C869),
+                            minimumSize: const Size(120, 45),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                            ),
+                          ),
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                              color: Colors.black,
+                              fontSize: 20.0,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                        child: const Text(
-                          'Login',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 20.0,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                   const SizedBox(height: 16.0),
                   RichText(
                     text: TextSpan(
@@ -122,17 +116,13 @@ class SignInScreensState extends State<SignInScreens> {
                             color: Colors.blue,
                             fontWeight: FontWeight.bold,
                           ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap = () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => const SignUpScreens(),
-                                    ),
-                                  );
-                                },
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const SignUpScreens()),
+                              );
+                            },
                         ),
                       ],
                     ),
@@ -147,20 +137,34 @@ class SignInScreensState extends State<SignInScreens> {
   }
 
   void _signIn() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
+
+    FocusScope.of(context).unfocus(); // Tutup keyboard
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+
     setState(() => _isLoading = true);
+
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const HomeScreens()),
-      );
+
+      final user = credential.user;
+
+      if (user != null) {
+        // Jika kamu butuh validasi email:
+        // if (!user.emailVerified) {
+        //   _showSnackBar('Email belum diverifikasi');
+        //   return;
+        // }
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const HomeScreens()),
+        );
+      }
     } on FirebaseAuthException catch (error) {
       _showSnackBar(_getAuthErrorMessage(error.code));
     } catch (error) {
@@ -171,25 +175,27 @@ class SignInScreensState extends State<SignInScreens> {
   }
 
   void _showSnackBar(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
   bool _isValidEmail(String email) {
-    String emailRegex =
-        r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zAZ0-9-]+)*$";
+    const emailRegex =
+        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
     return RegExp(emailRegex).hasMatch(email);
   }
 
   String _getAuthErrorMessage(String code) {
     switch (code) {
+      case 'invalid-email':
+        return 'Invalid email format.';
       case 'user-not-found':
-        return 'No user found with that email';
+        return 'No user found with that email.';
       case 'wrong-password':
-        return 'Wrong password. Please try again.';
+        return 'Incorrect password.';
+      case 'user-disabled':
+        return 'This account has been disabled.';
       default:
-        return 'An error occurred. Please try again.';
+        return 'Login failed. Please try again.';
     }
   }
 }

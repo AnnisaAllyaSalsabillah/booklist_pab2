@@ -35,15 +35,31 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
     );
 
     _controller.forward();
-    
-    Timer(const Duration(seconds: 3), () {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreens()));
-      } else {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const SignInScreens()));
-      }
-    });
+
+    _navigateAfterSplash();
+  }
+
+  Future<void> _navigateAfterSplash() async {
+    await Future.delayed(const Duration(seconds: 3));
+
+    final user = FirebaseAuth.instance.currentUser;
+
+    // Pastikan context masih aktif
+    if (!mounted) return;
+
+    if (user != null) {
+      // User sudah login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreens()),
+      );
+    } else {
+      // User belum login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const SignInScreens()),
+      );
+    }
   }
 
   @override
@@ -55,7 +71,7 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(255, 247, 213, 1),
+      backgroundColor: const Color.fromRGBO(255, 247, 213, 1),
       body: Center(
         child: FadeTransition(
           opacity: _animation,
@@ -63,7 +79,7 @@ class _SplashScreensState extends State<SplashScreens> with SingleTickerProvider
             'assets/booklist.png',
             width: 400,
             height: 300,
-          ),  
+          ),
         ),
       ),
     );

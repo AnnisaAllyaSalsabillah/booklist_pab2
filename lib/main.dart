@@ -12,7 +12,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/date_symbol_data_local.dart';
 
-
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
@@ -75,16 +74,11 @@ Future<void> showNotificationFromData(Map<String, dynamic> data) async {
             contentTitle: title,
           );
 
-  final simpleStyleInfo = BigTextStyleInformation(
-    '$body\n\nDari: $sender\nWaktu: $time',
-    contentTitle: title,
-  );
-
   final androidDetails = AndroidNotificationDetails(
     'detailed_channel',
     'Notifikasi Detail',
     channelDescription: 'Notifikasi dengan detail tambahan',
-    styleInformation: simpleStyleInfo,
+    styleInformation: styleInfo,
     largeIcon: largeIconBitmap,
     importance: Importance.max,
     priority: Priority.max,
@@ -110,8 +104,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     await showNotificationFromData(message.data);
   } else {
     await showBasicNotification(
-      message.notification!.title,
-      message.notification!.body,
+      message.notification?.title,
+      message.notification?.body,
     );
   }
 }
@@ -121,7 +115,6 @@ void main() async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await requestNotificationPermission();
   await initializeDateFormatting();
-
 
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
@@ -166,8 +159,8 @@ class _MyAppState extends State<MyApp> {
         showNotificationFromData(message.data);
       } else {
         showBasicNotification(
-          message.notification!.title,
-          message.notification!.body,
+          message.notification?.title,
+          message.notification?.body,
         );
       }
     });
@@ -182,12 +175,15 @@ class _MyAppState extends State<MyApp> {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.green),
         useMaterial3: true,
       ),
-      //home: HomeScreens(),
-        home: SignInScreens(),
-       //home: AddPostScreen(),
-      // home: EditProfilScreens(),
-      //home: ProfileScreens(),
-
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreens(),
+        '/signin': (context) => const SignInScreens(),
+        '/home': (context) => const HomeScreens(),
+        '/profile': (context) => const ProfileScreens(),
+        '/addpost': (context) => const AddPostScreen(),
+        // Tambahkan lagi jika punya layar lain seperti SignUpScreens, EditProfile, dll.
+      },
     );
   }
 }

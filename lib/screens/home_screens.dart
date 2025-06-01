@@ -92,10 +92,13 @@ class _HomeScreensState extends State<HomeScreens> {
             ListTile(
               leading: const Icon(Icons.logout_outlined),
               title: const Text('LogOut'),
-              onTap: () {
+              onTap: () async {
+                await FirebaseAuth.instance.signOut();
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => SignInScreens()),
+                  MaterialPageRoute(
+                    builder: (context) => const SignInScreens(),
+                  ),
                 );
               },
             ),
@@ -103,7 +106,7 @@ class _HomeScreensState extends State<HomeScreens> {
         ),
       ),
       appBar: AppBar(
-        backgroundColor: Color(0xFFAC6F17),
+        backgroundColor: const Color(0xFFAC6F17),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -231,7 +234,6 @@ class _HomeScreensState extends State<HomeScreens> {
                                   ),
                                 ],
                               ),
-
                               const SizedBox(height: 8),
                               Text(content),
                               if (location.isNotEmpty) ...[
