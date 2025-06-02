@@ -66,7 +66,7 @@ class _SplashScreensState extends State<SplashScreens>
     final colorScheme = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background, // Gunakan dari theme
+      backgroundColor: const Color(0xFFFFF7D5), // Override warna background menjadi merah
       body: Center(
         child: FadeTransition(
           opacity: _animation,

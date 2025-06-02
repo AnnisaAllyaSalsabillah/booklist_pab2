@@ -120,6 +120,15 @@ class _HomeScreensState extends State<HomeScreens> {
       ),
       appBar: AppBar(
         backgroundColor: theme.colorScheme.primary,
+        iconTheme: IconThemeData(
+          color: theme.colorScheme.onPrimary, // Ini menyesuaikan dengan theme
+        ),
+        actionsIconTheme: IconThemeData(
+          color:
+              theme
+                  .colorScheme
+                  .onPrimary, // Untuk ikon di actions (seperti search)
+        ),
         leading: IconButton(
           icon: const Icon(Icons.menu),
           onPressed: () => _scaffoldKey.currentState?.openDrawer(),
@@ -136,6 +145,7 @@ class _HomeScreensState extends State<HomeScreens> {
           ),
         ],
       ),
+
       body: StreamBuilder<QuerySnapshot>(
         stream:
             _firestore

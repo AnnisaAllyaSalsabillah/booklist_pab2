@@ -1,7 +1,7 @@
 import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:booklist/screens/home_screens.dart';
-import 'package:flutter/gestures.dart' show TapGestureRecognizer;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -9,19 +9,19 @@ class SignUpScreens extends StatefulWidget {
   const SignUpScreens({super.key});
 
   @override
-  SignUpScreensState createState() => SignUpScreensState();
+  State<SignUpScreens> createState() => SignUpScreensState();
 }
 
 class SignUpScreensState extends State<SignUpScreens> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _userNameController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
+  final _userNameController = TextEditingController();
+
   bool _isLoading = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
-
   late TapGestureRecognizer _tapRecognizer;
 
   @override
@@ -29,20 +29,22 @@ class SignUpScreensState extends State<SignUpScreens> {
     super.initState();
     _tapRecognizer = TapGestureRecognizer()
       ..onTap = () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const SignInScreens()),
-        );
+        if (mounted) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SignInScreens()),
+          );
+        }
       };
   }
 
   @override
   void dispose() {
-    _userNameController.dispose();
+    _tapRecognizer.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _tapRecognizer.dispose();
+    _userNameController.dispose();
     super.dispose();
   }
 
@@ -54,12 +56,14 @@ class SignUpScreensState extends State<SignUpScreens> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up', style: textTheme.titleLarge),
-        backgroundColor: colorScheme.background,
-        foregroundColor: colorScheme.onBackground,
-        elevation: 0,
+        title: Text(
+          'Sign Up',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 25,
+          ),
+        ),
       ),
-      backgroundColor: colorScheme.background,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -69,10 +73,12 @@ class SignUpScreensState extends State<SignUpScreens> {
               child: Column(
                 children: [
                   const CircleAvatar(
-                    radius: 50,
+                    radius: 70,
                     backgroundImage: AssetImage('assets/radius_booklist.png'),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 70),
+
+                  // Email
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -88,10 +94,11 @@ class SignUpScreensState extends State<SignUpScreens> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 16),
+
+                  // Username
                   TextFormField(
                     controller: _userNameController,
-                    textCapitalization: TextCapitalization.words,
                     decoration: const InputDecoration(
                       labelText: 'Username',
                       border: OutlineInputBorder(),
@@ -99,14 +106,17 @@ class SignUpScreensState extends State<SignUpScreens> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your full name';
+                        return 'Please enter your username';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 16),
+
+                  // Password
                   TextFormField(
                     controller: _passwordController,
+                    obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
                       border: const OutlineInputBorder(),
@@ -122,20 +132,19 @@ class SignUpScreensState extends State<SignUpScreens> {
                         },
                       ),
                     ),
-                    obscureText: !_isPasswordVisible,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
-                      }
-                      if (value.length < 6) {
+                      if (value == null || value.isEmpty || value.length < 6) {
                         return 'Password must be at least 6 characters';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 16),
+
+                  // Confirm Password
                   TextFormField(
                     controller: _confirmPasswordController,
+                    obscureText: !_isConfirmPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Confirm Password',
                       border: const OutlineInputBorder(),
@@ -151,43 +160,38 @@ class SignUpScreensState extends State<SignUpScreens> {
                         },
                       ),
                     ),
-                    obscureText: !_isConfirmPasswordVisible,
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
-                      }
                       if (value != _passwordController.text) {
                         return 'Passwords do not match';
                       }
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
+                  const SizedBox(height: 20),
+
+                  // Button
                   _isLoading
                       ? const CircularProgressIndicator()
                       : ElevatedButton(
                           onPressed: _signUp,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            minimumSize: const Size(120, 45),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                          ),
                           child: Text(
                             'Daftar',
                             style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimary,
+                              fontSize: 19,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
-                  const SizedBox(height: 20),
+
+                  const SizedBox(height: 25),
+
+                  // Link ke Sign In
                   RichText(
                     text: TextSpan(
                       text: 'Sudah punya Akun?',
                       style: textTheme.bodyMedium?.copyWith(
                         color: colorScheme.error,
+                        fontSize: 16,
                       ),
                       children: <TextSpan>[
                         TextSpan(
@@ -195,7 +199,7 @@ class SignUpScreensState extends State<SignUpScreens> {
                           style: textTheme.bodyMedium?.copyWith(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
+                            fontSize: 16,
                           ),
                           recognizer: _tapRecognizer,
                         ),
@@ -211,35 +215,41 @@ class SignUpScreensState extends State<SignUpScreens> {
     );
   }
 
-  void _signUp() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+  Future<void> _signUp() async {
+    if (!_formKey.currentState!.validate()) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text;
+    final username = _userNameController.text.trim();
+
     setState(() => _isLoading = true);
+
     try {
       final userCredential = await FirebaseAuth.instance
           .createUserWithEmailAndPassword(email: email, password: password);
+
       await FirebaseFirestore.instance
           .collection('users')
           .doc(userCredential.user!.uid)
           .set({
-        'userName': _userNameController.text.trim(),
+        'userName': username,
         'email': email,
         'createdAt': Timestamp.now(),
       });
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreens()),
-        (route) => false,
-      );
-    } on FirebaseAuthException catch (error) {
-      _showErrorMessage(_getAuthErrorMessage(error.code));
-    } catch (error) {
-      _showErrorMessage('An error occurred: $error');
+
+      if (mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const SignInScreens()),
+          (route) => false,
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      _showErrorMessage(_getAuthErrorMessage(e.code));
+    } catch (e) {
+      _showErrorMessage('Terjadi kesalahan: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -247,22 +257,22 @@ class SignUpScreensState extends State<SignUpScreens> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  bool _isValidEmail(String email) {
-    String emailRegex =
-        r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$";
+  static bool _isValidEmail(String email) {
+    const emailRegex =
+        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
     return RegExp(emailRegex).hasMatch(email);
   }
 
   String _getAuthErrorMessage(String code) {
     switch (code) {
       case 'weak-password':
-        return 'The password provided is too weak.';
+        return 'Password terlalu lemah.';
       case 'email-already-in-use':
-        return 'The account already exists for that email.';
+        return 'Email sudah digunakan.';
       case 'invalid-email':
-        return 'The email address is not valid.';
+        return 'Format email tidak valid.';
       default:
-        return 'An error occurred. Please try again.';
+        return 'Terjadi kesalahan. Silakan coba lagi.';
     }
   }
 }

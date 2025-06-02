@@ -32,15 +32,17 @@ class _SearchScreensState extends State<SearchScreens> {
 
     try {
       final snapshot =
-          await FirebaseFirestore.instance
-              .collection('posts')
-              .orderBy('content')
-              .startAt([query])
-              .endAt(['$query\uf8ff'])
-              .get();
+          await FirebaseFirestore.instance.collection('posts').get();
+
+      final results =
+          snapshot.docs.where((doc) {
+            final data = doc.data();
+            final content = data['content']?.toString().toLowerCase() ?? '';
+            return content.contains(query.toLowerCase());
+          }).toList();
 
       setState(() {
-        _searchResults = snapshot.docs;
+        _searchResults = results;
         _isLoading = false;
       });
     } catch (e, stackTrace) {
@@ -79,32 +81,41 @@ class _SearchScreensState extends State<SearchScreens> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(60),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, top: 8),
+            padding: const EdgeInsets.only(left: 30, right: 16, top: 8),
             child: Row(
               children: [
-                Icon(Icons.search, color: colorScheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    onChanged: _onSearchChanged,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onBackground,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: colorScheme.onPrimary,
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    decoration: InputDecoration(
-                      hintText: 'Telusuri orang atau kata kunci',
-                      hintStyle: textTheme.bodyMedium?.copyWith(
-                        color: colorScheme.onBackground.withOpacity(0.5),
+
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: TextField(
+                        controller: _controller,
+                        onChanged: _onSearchChanged,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onBackground,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: 'Telusuri orang atau kata kunci',
+                          hintStyle: textTheme.bodyMedium?.copyWith(
+                            color: colorScheme.onBackground.withOpacity(0.5),
+                          ),
+                          border: InputBorder.none,
+                        ),
                       ),
-                      border: InputBorder.none,
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 GestureDetector(
                   onTap: () {
                     _controller.clear();
@@ -156,7 +167,6 @@ class _SearchScreensState extends State<SearchScreens> {
                       _searchResults[index].data() as Map<String, dynamic>;
                   final content = postData['content'] ?? '';
                   final imageUrls = List<String>.from(postData['images'] ?? []);
-                  final likeCount = postData['likes'] ?? 0;
                   final userId = postData['userId'];
 
                   return FutureBuilder<DocumentSnapshot>(
@@ -253,22 +263,6 @@ class _SearchScreensState extends State<SearchScreens> {
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.favorite_border,
-                                    size: 20,
-                                    color: colorScheme.secondary,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$likeCount',
-                                    style: textTheme.bodyMedium?.copyWith(
-                                      color: colorScheme.onBackground,
-                                    ),
-                                  ),
-                                ],
-                              ),
                               Divider(color: colorScheme.outline),
                             ],
                           ],

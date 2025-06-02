@@ -3,7 +3,6 @@ import 'package:booklist/screens/sign_up_screens.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:booklist/theme/theme.dart';
 
 
 class SignInScreens extends StatefulWidget {
@@ -27,11 +26,13 @@ class SignInScreensState extends State<SignInScreens> {
     final textTheme = theme.textTheme;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.background,
       appBar: AppBar(
-        title: Text('Sign In', style: textTheme.titleLarge),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
+        title: Text(
+          'Sign In',
+          style: textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 25),
+        ),
       ),
       body: Center(
         child: Padding(
@@ -41,25 +42,31 @@ class SignInScreensState extends State<SignInScreens> {
               key: _formKey,
               autovalidateMode: AutovalidateMode.onUserInteraction,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   const CircleAvatar(
-                    radius: 50,
+                    radius: 70,
                     backgroundImage: AssetImage('assets/radius_booklist.png'),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 90),
                   TextFormField(
                     controller: _emailController,
                     textCapitalization: TextCapitalization.none,
                     keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
+                    decoration: const InputDecoration(
                       labelText: 'Email',
-                      labelStyle: TextStyle(color: colorScheme.primary),
-                      border: const OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person, color: colorScheme.primary),
+                      // labelStyle: TextStyle(color: colorScheme.primary),
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(
+                        Icons.person,
+                        // color: colorScheme.primary,
+                      ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty || !_isValidEmail(value)) {
+                      if (value == null ||
+                          value.isEmpty ||
+                          !_isValidEmail(value)) {
                         return 'Please enter a valid email';
                       }
                       return null;
@@ -71,16 +78,19 @@ class SignInScreensState extends State<SignInScreens> {
                     obscureText: !_isPasswordVisible,
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      labelStyle: TextStyle(color: colorScheme.primary),
+                      // labelStyle: TextStyle(color: colorScheme.primary),
                       border: const OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.lock, color: colorScheme.primary),
+                      prefixIcon: Icon(Icons.lock),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                          color: colorScheme.primary,
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                         ),
                         onPressed: () {
-                          setState(() => _isPasswordVisible = !_isPasswordVisible);
+                          setState(
+                            () => _isPasswordVisible = !_isPasswordVisible,
+                          );
                         },
                       ),
                     ),
@@ -91,31 +101,31 @@ class SignInScreensState extends State<SignInScreens> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   _isLoading
                       ? const SizedBox(
-                          width: 48,
-                          height: 48,
-                          child: CircularProgressIndicator(),
-                        )
+                        width: 48,
+                        height: 48,
+                        child: CircularProgressIndicator(),
+                      )
                       : ElevatedButton(
-                          onPressed: _isLoading ? null : _signIn,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: colorScheme.primary,
-                            minimumSize: const Size(120, 45),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                            ),
-                          ),
-                          child: Text(
-                            'Login',
-                            style: textTheme.titleMedium?.copyWith(
-                              color: colorScheme.onPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                        onPressed: _isLoading ? null : _signIn,
+                        // style: ElevatedButton.styleFrom(
+                        //   backgroundColor: colorScheme.primary,
+                        //   minimumSize: const Size(120, 45),
+                        //   shape: RoundedRectangleBorder(
+                        //     borderRadius: BorderRadius.circular(10.0),
+                        //   ),
+                        // ),
+                        child: Text(
+                          'Login',
+                          style: textTheme.titleMedium?.copyWith(
+                            fontSize: 20.0,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                  const SizedBox(height: 16.0),
+                      ),
+                  const SizedBox(height: 20.0),
                   RichText(
                     text: TextSpan(
                       style: textTheme.bodyMedium?.copyWith(
@@ -129,14 +139,18 @@ class SignInScreensState extends State<SignInScreens> {
                           style: TextStyle(
                             color: colorScheme.primary,
                             fontWeight: FontWeight.bold,
+                            fontSize: 17,
                           ),
-                          recognizer: TapGestureRecognizer()
-                            ..onTap = () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const SignUpScreens()),
-                              );
-                            },
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const SignUpScreens(),
+                                    ),
+                                  );
+                                },
                         ),
                       ],
                     ),
@@ -185,16 +199,12 @@ class SignInScreensState extends State<SignInScreens> {
   void _showSnackBar(String message) {
     final colorScheme = Theme.of(context).colorScheme;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: colorScheme.error,
-      ),
+      SnackBar(content: Text(message), backgroundColor: colorScheme.error),
     );
   }
 
   bool _isValidEmail(String email) {
-    const emailRegex =
-        r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
+    const emailRegex = r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$";
     return RegExp(emailRegex).hasMatch(email);
   }
 

@@ -4,11 +4,10 @@ import 'package:booklist/screens/detail_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:booklist/screens/sign_in_screens.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:booklist/screens/home_screens.dart';
-import 'package:booklist/theme/theme.dart';
+// import 'package:booklist/theme/theme.dart';
 
 class ProfileScreens extends StatefulWidget {
   const ProfileScreens({super.key});
@@ -21,7 +20,6 @@ class _ProfileScreensState extends State<ProfileScreens>
     with SingleTickerProviderStateMixin {
   String _userName = '';
   String _email = '';
-  String _phone = '';
   String _profileImageBase64 = '';
   bool _isLoading = true;
   late TabController _tabController;
@@ -66,7 +64,6 @@ class _ProfileScreensState extends State<ProfileScreens>
           setState(() {
             _userName = data['userName'] ?? '';
             _email = data['email'] ?? '';
-            _phone = data['phone'] ?? '';
             _profileImageBase64 = data['profileImage'] ?? '';
           });
         }
@@ -84,15 +81,6 @@ class _ProfileScreensState extends State<ProfileScreens>
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  void _signOut() async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const SignInScreens()),
-      (route) => false,
-    );
   }
 
   Future<void> _compressAndEncodeImageProfile() async {
@@ -153,6 +141,19 @@ class _ProfileScreensState extends State<ProfileScreens>
     if (!mounted) return;
   }
 
+  Future<void> deletePost(String postId) async {
+    try {
+      await FirebaseFirestore.instance.collection('posts').doc(postId).delete();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Post berhasil dihapus')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal menghapus post: $e')));
+    }
+  }
+
   void _showImageSourceDialog() {
     showModalBottomSheet(
       context: context,
@@ -188,32 +189,6 @@ class _ProfileScreensState extends State<ProfileScreens>
     );
   }
 
-  void _toggleLike(
-    String postId,
-    int currentLikes,
-    List<dynamic>? likedByList,
-  ) async {
-    final userId = FirebaseAuth.instance.currentUser?.uid;
-    if (userId == null) return;
-
-    final postRef = FirebaseFirestore.instance.collection('posts').doc(postId);
-    final likedBy = likedByList ?? [];
-
-    if (likedBy.contains(userId)) {
-      // Unlike
-      await postRef.update({
-        'likes': currentLikes - 1,
-        'likedBy': FieldValue.arrayRemove([userId]),
-      });
-    } else {
-      // Like
-      await postRef.update({
-        'likes': currentLikes + 1,
-        'likedBy': FieldValue.arrayUnion([userId]),
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final imageWidget =
@@ -246,13 +221,13 @@ class _ProfileScreensState extends State<ProfileScreens>
                 child: Column(
                   children: [
                     SizedBox(
-                      height: 200,
+                      height: 300,
                       child: Stack(
                         children: [
                           GestureDetector(
                             onTap: _showImageSourceDialog,
                             child: Container(
-                              height: 250,
+                              height: 300,
                               width: double.infinity,
                               decoration: BoxDecoration(
                                 color: Colors.grey[300],
@@ -267,12 +242,11 @@ class _ProfileScreensState extends State<ProfileScreens>
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       child: Row(
                         children: [
-                          // SizedBox dihapus supaya tidak mendorong ke kanan
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,7 +274,8 @@ class _ProfileScreensState extends State<ProfileScreens>
                     TabBar(
                       controller: _tabController,
                       labelColor: Theme.of(context).colorScheme.primary,
-                      unselectedLabelColor: Theme.of(context).colorScheme.onSurface,
+                      unselectedLabelColor:
+                          Theme.of(context).colorScheme.onSurface,
                       indicatorColor: Theme.of(context).colorScheme.primary,
                       tabs: const [Tab(text: 'Post'), Tab(text: 'Likes')],
                     ),
@@ -315,7 +290,6 @@ class _ProfileScreensState extends State<ProfileScreens>
               ),
     );
   }
-
   Widget _buildPostList() {
     final currentUser = FirebaseAuth.instance.currentUser!;
     print("akuuu ${currentUser.uid}");
@@ -355,7 +329,6 @@ class _ProfileScreensState extends State<ProfileScreens>
             final location = data['location'] ?? '';
             final createdAt = (data['createdAt'] as Timestamp).toDate();
             final imageBase64List = List<String>.from(data['images'] ?? []);
-            final likeCount = data['likes'] ?? 0;
 
             return InkWell(
               onTap: () {
@@ -369,7 +342,6 @@ class _ProfileScreensState extends State<ProfileScreens>
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Card(
-                  elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -404,10 +376,13 @@ class _ProfileScreensState extends State<ProfileScreens>
                                 ),
                                 Text(
                                   _email,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurface,
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.bodyMedium?.copyWith(
+                                    color:
+                                        Theme.of(context).colorScheme.onSurface,
+                                  ),
                                 ),
-                                )
                               ],
                             ),
                             const Spacer(),
@@ -417,6 +392,43 @@ class _ProfileScreensState extends State<ProfileScreens>
                                 color: Colors.grey,
                                 fontSize: 12,
                               ),
+                            ),
+                            const SizedBox(width: 4),
+                            IconButton(
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder:
+                                      (context) => AlertDialog(
+                                        title: const Text('Hapus Postingan'),
+                                        content: const Text(
+                                          'Apakah Anda yakin ingin menghapus postingan ini?',
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed:
+                                                () => Navigator.pop(context),
+                                            child: const Text('Batal'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              Navigator.pop(
+                                                context,
+                                              ); // Tutup dialog
+                                              await deletePost(posts[index].id);
+                                            },
+                                            child: const Text(
+                                              'Hapus',
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                );
+                              },
+                              icon: const Icon(Icons.delete),
                             ),
                           ],
                         ),
@@ -498,7 +510,6 @@ class _ProfileScreensState extends State<ProfileScreens>
             final location = data['location'] ?? '';
             final createdAt = (data['createdAt'] as Timestamp).toDate();
             final imageBase64List = List<String>.from(data['images'] ?? []);
-            final likeCount = data['likes'] ?? 0;
 
             return InkWell(
               onTap: () {
@@ -530,7 +541,10 @@ class _ProfileScreensState extends State<ProfileScreens>
                               )
                               : CircleAvatar(
                                 radius: 20,
-                                backgroundColor: Theme.of(context).colorScheme.onSurfaceVariant,
+                                backgroundColor:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                 child: Icon(Icons.person),
                               ),
                           const SizedBox(width: 10),

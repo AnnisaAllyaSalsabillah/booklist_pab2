@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:booklist/theme/theme.dart';
+// import 'package:booklist/theme/theme.dart';
 
 class DetailScreen extends StatefulWidget {
   final String postId;
@@ -168,7 +168,7 @@ class _DetailScreenState extends State<DetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    
+
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }

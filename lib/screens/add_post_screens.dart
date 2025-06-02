@@ -162,7 +162,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   ),
                   child: const Text(
                     "Post",
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                   ),
                 ),
               ],
@@ -182,7 +182,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       ),
                     )
                     : const CircleAvatar(
-                      backgroundColor: Colors.grey,
+                      backgroundColor: Color.fromARGB(255, 219, 216, 216),
                       radius: 20,
                       child: Icon(Icons.person),
                     ),
