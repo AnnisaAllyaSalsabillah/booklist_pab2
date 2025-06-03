@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:booklist/screens/detail_screens.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
@@ -95,7 +96,6 @@ class _SearchScreensState extends State<SearchScreens> {
                       color: colorScheme.onPrimary,
                       borderRadius: BorderRadius.circular(12),
                     ),
-
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(12),
                       child: TextField(
@@ -106,6 +106,10 @@ class _SearchScreensState extends State<SearchScreens> {
                         ),
                         decoration: InputDecoration(
                           hintText: 'Telusuri orang atau kata kunci',
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           hintStyle: textTheme.bodyMedium?.copyWith(
                             color: colorScheme.onBackground.withOpacity(0.5),
                           ),
@@ -200,72 +204,92 @@ class _SearchScreensState extends State<SearchScreens> {
                       final email = userData['email'] ?? '';
                       final profileImage = userData['profileImage'] ?? '';
 
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder:
+                                  (context) => DetailScreen(
+                                    postId: _searchResults[index].id,
+                                  ),
+                            ),
+                          );
+                        },
+                        child: Card(
+                          elevation: 2,
+                        color: theme.cardColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                profileImage.isNotEmpty
-                                    ? CircleAvatar(
-                                      radius: 20,
-                                      backgroundImage: MemoryImage(
-                                        base64Decode(profileImage),
-                                      ),
-                                    )
-                                    : CircleAvatar(
-                                      radius: 20,
-                                      backgroundColor: colorScheme.primary
-                                          .withOpacity(0.3),
-                                    ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                Row(
                                   children: [
-                                    Text(
-                                      username,
-                                      style: textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: colorScheme.onBackground,
-                                      ),
-                                    ),
-                                    Text(
-                                      email,
-                                      style: textTheme.bodySmall?.copyWith(
-                                        color: colorScheme.onBackground
-                                            .withOpacity(0.6),
-                                      ),
+                                    profileImage.isNotEmpty
+                                        ? CircleAvatar(
+                                          radius: 20,
+                                          backgroundImage: MemoryImage(
+                                            base64Decode(profileImage),
+                                          ),
+                                        )
+                                        : CircleAvatar(
+                                          radius: 20,
+                                          backgroundColor: colorScheme.primary
+                                              .withOpacity(0.3),
+                                        ),
+                                    const SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          username,
+                                          style: textTheme.bodyLarge?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: colorScheme.onBackground,
+                                          ),
+                                        ),
+                                        Text(
+                                          email,
+                                          style: textTheme.bodySmall?.copyWith(
+                                            color: colorScheme.onBackground
+                                                .withOpacity(0.6),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  content,
+                                  style: textTheme.bodyMedium?.copyWith(
+                                    color: colorScheme.onBackground,
+                                  ),
+                                ),
+                                if (imageUrls.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.memory(
+                                      base64Decode(imageUrls[0]),
+                                      height: 200,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
                               ],
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              content,
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colorScheme.onBackground,
-                              ),
-                            ),
-                            if (imageUrls.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
-                                child: Image.memory(
-                                  base64Decode(imageUrls[0]),
-                                  height: 200,
-                                  width: double.infinity,
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Divider(color: colorScheme.outline),
-                            ],
-                          ],
+                          ),
                         ),
                       );
                     },
